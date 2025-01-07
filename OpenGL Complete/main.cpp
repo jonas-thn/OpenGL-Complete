@@ -1,12 +1,25 @@
 #include <iostream>
 
+#define GLEW_STATIC
 #include <GL/glew.h>
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 
+const int WIDTH = 800;
+const int HEIGHT = 600;
+
 SDL_Window* window;
+SDL_GLContext glContext;
 bool close = false;
+
+float vertices[] = {
+	-0.5f, -0.5f, 0.0f,
+	0.5f, -0.5f, 0.0f,
+	0.0f, 0.5f, 0.0f
+};
+
+unsigned int VBO;
 
 void init()
 {
@@ -21,16 +34,28 @@ void init()
 
 	window = SDL_CreateWindow("OpenGL Complete", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, SDL_WINDOW_OPENGL);
 
-	SDL_GLContext glContext = SDL_GL_CreateContext(window);
+	if (window == NULL)
+	{
+		std::cout << "Window Creation Error" << std::endl;
+		exit(-1);
+	}
+
+	glContext = SDL_GL_CreateContext(window);
 
 	GLenum err = glewInit();
 	if (err != GLEW_OK)
 	{
-		std::cout << "Error: " << glewGetErrorString(err) << std::endl;
+		std::cout << "Error Glew Init: " << glewGetErrorString(err) << std::endl;
 		exit(-1);
 	}
 
 	std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
+
+	glViewport(0, 0, WIDTH, HEIGHT);
+
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 }
 
 void process_input()
@@ -57,6 +82,13 @@ void render()
 	SDL_GL_SwapWindow(window);
 }
 
+void cleanup()
+{
+	SDL_DestroyWindow(window);
+	SDL_GL_DeleteContext(glContext);
+	SDL_Quit();
+}
+
 int main(int argc, char* argv[])
 {
 	init();
@@ -66,6 +98,8 @@ int main(int argc, char* argv[])
 		update();
 		render();
 	}
+
+	cleanup();
 
 	return 0;
 }
