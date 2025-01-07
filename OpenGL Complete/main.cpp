@@ -6,6 +6,8 @@
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 
+#include "Shader.h"
+
 const int WIDTH = 800;
 const int HEIGHT = 600;
 
@@ -20,6 +22,7 @@ float vertices[] = {
 };
 
 unsigned int VBO;
+unsigned int VAO;
 
 void init()
 {
@@ -52,10 +55,22 @@ void init()
 	std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
 	glViewport(0, 0, WIDTH, HEIGHT);
+}
 
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+void setup()
+{
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+		glGenBuffers(1, &VBO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+	glBindVertexArray(0);
+
+	Shader shader("vertex.vert", "fragment.frag");
+
+	shader.UseShader();
 }
 
 void process_input()
@@ -79,6 +94,9 @@ void render()
 	glClearColor(1.0f, 0.85f, 0.6f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	glBindVertexArray(VAO);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+
 	SDL_GL_SwapWindow(window);
 }
 
@@ -92,6 +110,7 @@ void cleanup()
 int main(int argc, char* argv[])
 {
 	init();
+	setup();
 
 	while (!close)
 	{
