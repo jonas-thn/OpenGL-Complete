@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 
 #define GLEW_STATIC
 #include <GL/glew.h>
@@ -16,13 +17,22 @@ SDL_GLContext glContext;
 bool close = false;
 
 float vertices[] = {
-	-0.5f, -0.5f, 0.0f,
-	0.5f, -0.5f, 0.0f,
-	0.0f, 0.5f, 0.0f
+0.5f, 0.5f, 0.0f, // top right
+0.5f, -0.5f, 0.0f, // bottom right
+-0.5f, -0.5f, 0.0f, // bottom left
+-0.5f, 0.5f, 0.0f // top left
+};
+
+unsigned int indices[] = { 
+0, 1, 3, // first triangle
+1, 2, 3 // second triangle
 };
 
 unsigned int VBO;
 unsigned int VAO;
+unsigned int EBO;
+
+std::unique_ptr<Shader> shader = nullptr;
 
 void init()
 {
@@ -61,16 +71,20 @@ void setup()
 {
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
+
 		glGenBuffers(1, &VBO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
+
+		glGenBuffers(1, &EBO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
 	glBindVertexArray(0);
 
-	Shader shader("vertex.vert", "fragment.frag");
-
-	shader.UseShader();
+	shader = std::make_unique<Shader>("vertex.vert", "fragment.frag");
 }
 
 void process_input()
@@ -94,8 +108,10 @@ void render()
 	glClearColor(1.0f, 0.85f, 0.6f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	shader->UseShader();
 	glBindVertexArray(VAO);
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 	SDL_GL_SwapWindow(window);
 }
