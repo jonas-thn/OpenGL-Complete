@@ -10,7 +10,13 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "Shader.h"
+#include "Input.h"
+#include "Camera.h"
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -35,7 +41,12 @@ unsigned int VBO;
 unsigned int VAO;
 unsigned int EBO;
 
-std::unique_ptr<Shader> shader = nullptr;
+//std::unique_ptr<Shader> shader = nullptr;
+//std::unique_ptr<Input> input = nullptr;
+
+Shader* shader = nullptr;
+Input* input = nullptr;
+Camera* camera = nullptr;
 
 unsigned int texture;
 
@@ -70,6 +81,7 @@ void init()
 	std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
 	glViewport(0, 0, WIDTH, HEIGHT);
+	glEnable(GL_DEPTH_TEST);
 }
 
 void setup()
@@ -95,9 +107,14 @@ void setup()
 
 	glBindVertexArray(0);
 
-	//----------SHADER----------
+	//----------INIT----------
 
-	shader = std::make_unique<Shader>("vertex.vert", "fragment.frag");
+	/*shader = std::make_unique<Shader>("vertex.vert", "fragment.frag");
+	input = std::make_unique<Input>();*/
+
+	shader = new Shader("vertex.vert", "fragment.frag");
+	input = new Input();
+	camera = new Camera(WIDTH, HEIGHT, *input);
 
 	//----------TEXTURE----------
 
@@ -134,33 +151,38 @@ void setup()
 	}
 
 	stbi_image_free(data);
+
+	//----------TRANFORM----------
+
+
 }
 
 void process_input()
 {
-	SDL_Event event;
-	while (SDL_PollEvent(&event))
-	{
-		if (event.type == SDL_QUIT)
-		{
-			close = true;
-		}
-	}
+	input->HandleInput();
+	close = input->GetQuit();
 }
-void update()
+void update(float deltaTime)
 {
-
+	camera->UpdateView(deltaTime);
 }
 
 void render()
 {
 	glClearColor(1.0f, 0.85f, 0.6f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	shader->UseShader();
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	shader->SetInt("texture0", 0);
+
+	glm::mat4 model = glm::mat4(1.0f);
+
+	shader->SetMat4("model", model);
+	shader->SetMat4("view", camera->GetView());
+	shader->SetMat4("proj", camera->GetProj());
+
 	glBindVertexArray(VAO);
 
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -173,6 +195,10 @@ void cleanup()
 	SDL_DestroyWindow(window);
 	SDL_GL_DeleteContext(glContext);
 	SDL_Quit();
+
+	delete shader;
+	delete input;
+	delete camera;
 }
 
 int main(int argc, char* argv[])
@@ -180,10 +206,16 @@ int main(int argc, char* argv[])
 	init();
 	setup();
 
+	float lastFrameTime = SDL_GetTicks();
+
 	while (!close)
 	{
+		float deltaTime = (SDL_GetTicks() - lastFrameTime) / 1000.0f;
+
+		lastFrameTime = SDL_GetTicks();
+
 		process_input();
-		update();
+		update(deltaTime);
 		render();
 	}
 
