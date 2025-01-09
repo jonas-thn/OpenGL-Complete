@@ -29,8 +29,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="vertex.vert" />
-    <None Include="fragment.frag" />
+    <None Include="Shaders\fragment.frag" />
+    <None Include="Shaders\vertex.vert" />
+    <None Include="Shaders\lightFragment.frag" />
+    <None Include="Shaders\lightVertex.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h">

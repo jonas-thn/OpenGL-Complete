@@ -26,18 +26,6 @@ SDL_GLContext glContext;
 bool close = false;
 
 float vertices[] = {
-0.5f, 0.5f, 0.0f, 1.0f, 1.0f, // top right
-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, // bottom right
--0.5f, -0.5f, 0.0f, 0.0f, 0.0f, // bottom left
--0.5f, 0.5f, 0.0f, 0.0f, 1.0f // top left
-};
-
-unsigned int indices[] = { 
-0, 1, 3, // first triangle
-1, 2, 3 // second triangle
-};
-
-float vertices1[] = {
 	//positions			 //normals			//texture coords
 	-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
 	0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
@@ -77,7 +65,7 @@ float vertices1[] = {
 	-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f
 };
 
-float vertices2[] = {
+float lightVertices[] = {
 	-0.5f, -0.5f, -0.5f,
 	 0.5f, -0.5f, -0.5f,
 	 0.5f,  0.5f, -0.5f,
@@ -121,16 +109,27 @@ float vertices2[] = {
 	-0.5f,  0.5f, -0.5f,
 };
 
-unsigned int VBO;
-unsigned int VAO;
-unsigned int EBO;
+glm::vec3 cubePositions[] = {
+	glm::vec3(0.0f, 0.0f, 0.0f),
+	glm::vec3(2.0f, 5.0f, -15.0f),
+	glm::vec3(-1.5f, -2.2f, -2.5f),
+	glm::vec3(-3.8f, -2.0f, -12.3f),
+	glm::vec3(2.4f, -0.4f, -3.5f),
+	glm::vec3(-1.7f, 3.0f, -7.5f),
+	glm::vec3(1.3f, -2.0f, -2.5f),
+	glm::vec3(1.5f, 2.0f, -2.5f),
+	glm::vec3(1.5f, 0.2f, -1.5f),
+	glm::vec3(-1.3f, 1.0f, -1.5f)
+};
 
-//std::unique_ptr<Shader> shader = nullptr;
-//std::unique_ptr<Input> input = nullptr;
+unsigned int VBO, VAO, EBO;
+unsigned int lightVBO, lightVAO, lightEBO;
 
 Shader* shader = nullptr;
 Input* input = nullptr;
 Camera* camera = nullptr;
+
+Shader* lightShader = nullptr;
 
 unsigned int texture;
 
@@ -179,7 +178,7 @@ void setup()
 
 		glGenBuffers(1, &VBO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices1), vertices1, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
@@ -192,14 +191,25 @@ void setup()
 
 	glBindVertexArray(0);
 
+	glGenVertexArrays(1, &lightVAO);
+	glBindVertexArray(lightVAO);
+
+	glGenBuffers(1, &lightVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, lightVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glBindVertexArray(0);
+
 	//----------INIT----------
 
-	/*shader = std::make_unique<Shader>("vertex.vert", "fragment.frag");
-	input = std::make_unique<Input>();*/
-
-	shader = new Shader("vertex.vert", "fragment.frag");
+	shader = new Shader("Shaders/vertex.vert", "Shaders/fragment.frag");
 	input = new Input();
 	camera = new Camera(WIDTH, HEIGHT, *input);
+
+	lightShader = new Shader("Shaders/lightVertex.vert", "Shaders/lightFragment.frag");
 
 	//----------TEXTURE----------
 
@@ -236,8 +246,6 @@ void setup()
 	}
 
 	stbi_image_free(data);
-
-	//----------TRANFORM----------
 }
 
 void process_input()
@@ -255,20 +263,34 @@ void render()
 	glClearColor(1.0f, 0.85f, 0.6f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	lightShader->UseShader();
+	lightShader->SetVec3("lightColor", glm::vec3(1, 1, 1));
+	glm::mat4 lightModel = glm::mat4(1.0f);
+	lightShader->SetMat4("model", lightModel);
+	lightShader->SetMat4("view", camera->GetView());
+	lightShader->SetMat4("proj", camera->GetProj());
+
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
 	shader->UseShader();
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	shader->SetInt("texture0", 0);
 
-	glm::mat4 model = glm::mat4(1.0f);
-
-	shader->SetMat4("model", model);
 	shader->SetMat4("view", camera->GetView());
 	shader->SetMat4("proj", camera->GetProj());
 
 	glBindVertexArray(VAO);
 
-	glDrawArrays(GL_TRIANGLES, 0, 36);
+	for (unsigned int i = 0; i < 10; i++)
+	{
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, cubePositions[i]);
+		float angle = 20.0f * i;
+		model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+		shader->SetMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+	}
 
 	SDL_GL_SwapWindow(window);
 }
