@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <vector>
 
 #define GLEW_STATIC
 #include <GL/glew.h>
@@ -7,7 +8,6 @@
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 
-#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 #include <glm/glm.hpp>
@@ -17,6 +17,9 @@
 #include "Shader.h"
 #include "Input.h"
 #include "Camera.h"
+#include "Material.h"
+#include "PointLight.h"
+#include "DirLight.h"
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -24,6 +27,14 @@ const int HEIGHT = 600;
 SDL_Window* window;
 SDL_GLContext glContext;
 bool close = false;
+
+glm::vec3 lightPos1(0.0f, 0.0f, -3.0f);
+const int NR_POINT_LIGHTS = 1;
+std::vector<PointLight*> pointLights;
+
+DirLight* dirLight = nullptr;
+
+Material* material = nullptr;
 
 float vertices[] = {
 	//positions			 //normals			//texture coords
@@ -131,8 +142,6 @@ Camera* camera = nullptr;
 
 Shader* lightShader = nullptr;
 
-unsigned int texture;
-
 void init()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -211,41 +220,12 @@ void setup()
 
 	lightShader = new Shader("Shaders/lightVertex.vert", "Shaders/lightFragment.frag");
 
-	//----------TEXTURE----------
+	PointLight* pointLight1 = new PointLight(lightPos1, glm::vec3(0.1, 0.1, 0.1), glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, 1.0), 1.0f, 0.3, 0.2);
+	pointLights.push_back(pointLight1);
 
-	stbi_set_flip_vertically_on_load(true);
+	dirLight = new DirLight(glm::vec3(0.5, 1.0, 0.2), glm::vec3(0.1, 0.1, 0.1), glm::vec3(0.4, 0.4, 0.4), glm::vec3(1.0, 1.0, 1.0));
 
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	
-	int width, height, nrChannels;
-	unsigned char* data = stbi_load("Textures/container.jpg", &width, &height, &nrChannels, 0);
-
-	if (data)
-	{
-		if (nrChannels == 3)
-		{
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-			glGenerateMipmap(GL_TEXTURE_2D);
-		}
-		else if (nrChannels == 4)
-		{
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-			glGenerateMipmap(GL_TEXTURE_2D);
-		}
-	}
-	else
-	{
-		std::cout << "Texture ERROR" << std::endl;
-	}
-
-	stbi_image_free(data);
+	material = new Material(0, 1, 128, "./Textures/container2.png", "./Textures/container2_specular.png");
 }
 
 void process_input()
@@ -260,12 +240,13 @@ void update(float deltaTime)
 
 void render()
 {
-	glClearColor(1.0f, 0.85f, 0.6f, 1.0f);
+	glClearColor(0.28f, 0.21f, 0.15f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	lightShader->UseShader();
 	lightShader->SetVec3("lightColor", glm::vec3(1, 1, 1));
 	glm::mat4 lightModel = glm::mat4(1.0f);
+	lightModel = glm::translate(lightModel, lightPos1);
 	lightShader->SetMat4("model", lightModel);
 	lightShader->SetMat4("view", camera->GetView());
 	lightShader->SetMat4("proj", camera->GetProj());
@@ -273,9 +254,18 @@ void render()
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	shader->UseShader();
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	shader->SetInt("texture0", 0);
+
+	shader->SetVec3("viewPos", camera->GetPos());
+
+	
+	for (int i = 0; i < NR_POINT_LIGHTS; i++)
+	{
+		pointLights[i]->UseLight(*shader, i);
+	}
+
+	dirLight->UseLight(*shader);
+
+	material->UseMaterial(*shader);
 
 	shader->SetMat4("view", camera->GetView());
 	shader->SetMat4("proj", camera->GetProj());
