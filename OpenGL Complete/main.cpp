@@ -149,6 +149,8 @@ Model* backpack = nullptr;
 
 Shader* modelShader = nullptr;
 
+Material* modelMaterial = nullptr;
+
 void init()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -237,6 +239,8 @@ void setup()
 	backpack = new Model("./Models/backpack.obj");
 
 	modelShader = new Shader("Shaders/modelVertex.vert", "Shaders/modelFragment.frag");
+
+	modelMaterial = new Material(2, 3, 128, "./Models/diffuse.jpg", "./Models/specular.jpg");
 }
 
 void process_input()
@@ -313,6 +317,8 @@ void render()
 
 	dirLight->UseLight(*modelShader);
 
+	modelMaterial->UseMaterial(*modelShader);
+
 	modelShader->SetMat4("view", camera->GetView());
 	modelShader->SetMat4("proj", camera->GetProj());
 
@@ -345,6 +351,7 @@ void cleanup()
 	delete material;
 	delete backpack;
 	delete modelShader;
+	delete modelMaterial;
 }
 
 int main(int argc, char* argv[])

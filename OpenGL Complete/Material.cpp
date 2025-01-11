@@ -80,6 +80,10 @@ Material::Material(int diffuseIndex, int specularIndex, float shininess, const c
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	}
+	else if (nChannels == 1)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, data);
+	}
 	else
 	{
 		std::cout << "nChannels Image Error." << std::endl;
