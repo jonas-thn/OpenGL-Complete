@@ -22,6 +22,7 @@
 #include "Material.h"
 #include "PointLight.h"
 #include "DirLight.h"
+#include "Model.h"
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -144,6 +145,10 @@ Camera* camera = nullptr;
 
 Shader* lightShader = nullptr;
 
+Model* backpack = nullptr;
+
+Shader* modelShader = nullptr;
+
 void init()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -205,12 +210,12 @@ void setup()
 	glGenVertexArrays(1, &lightVAO);
 	glBindVertexArray(lightVAO);
 
-	glGenBuffers(1, &lightVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, lightVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		glGenBuffers(1, &lightVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, lightVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(lightVertices), lightVertices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
 
 	glBindVertexArray(0);
 
@@ -228,6 +233,10 @@ void setup()
 	dirLight = new DirLight(glm::vec3(0.5, 1.0, 0.2), glm::vec3(0.1, 0.1, 0.1), glm::vec3(0.4, 0.4, 0.4), glm::vec3(1.0, 1.0, 1.0));
 
 	material = new Material(0, 1, 128, "./Textures/container2.png", "./Textures/container2_specular.png");
+
+	backpack = new Model("./Models/backpack.obj");
+
+	modelShader = new Shader("Shaders/modelVertex.vert", "Shaders/modelFragment.frag");
 }
 
 void process_input()
@@ -245,6 +254,8 @@ void render()
 	glClearColor(0.28f, 0.21f, 0.15f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	//----------LIGHT----------
+
 	lightShader->UseShader();
 	lightShader->SetVec3("lightColor", glm::vec3(1, 1, 1));
 	glm::mat4 lightModel = glm::mat4(1.0f);
@@ -253,13 +264,16 @@ void render()
 	lightShader->SetMat4("view", camera->GetView());
 	lightShader->SetMat4("proj", camera->GetProj());
 
+	glBindVertexArray(lightVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+
+	//----------BOXES----------
 
 	shader->UseShader();
 
 	shader->SetVec3("viewPos", camera->GetPos());
 
-	
 	for (int i = 0; i < NR_POINT_LIGHTS; i++)
 	{
 		pointLights[i]->UseLight(*shader, i);
@@ -284,6 +298,30 @@ void render()
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 	}
 
+	glBindVertexArray(0);
+
+	//----------MODEL----------
+
+	modelShader->UseShader();
+
+	modelShader->SetVec3("viewPos", camera->GetPos());
+
+	for (int i = 0; i < NR_POINT_LIGHTS; i++)
+	{
+		pointLights[i]->UseLight(*modelShader, i);
+	}
+
+	dirLight->UseLight(*modelShader);
+
+	modelShader->SetMat4("view", camera->GetView());
+	modelShader->SetMat4("proj", camera->GetProj());
+
+	glm::mat4 backpackModel = glm::mat4(1.0f);
+	backpackModel = glm::translate(backpackModel, glm::vec3(-5, 0, -5));
+	modelShader->SetMat4("model", backpackModel);
+
+	backpack->Draw(*modelShader);
+
 	SDL_GL_SwapWindow(window);
 }
 
@@ -296,6 +334,17 @@ void cleanup()
 	delete shader;
 	delete input;
 	delete camera;
+	delete lightShader;
+
+	for (PointLight* light : pointLights)
+	{
+		delete light;
+	}
+
+	delete dirLight;
+	delete material;
+	delete backpack;
+	delete modelShader;
 }
 
 int main(int argc, char* argv[])

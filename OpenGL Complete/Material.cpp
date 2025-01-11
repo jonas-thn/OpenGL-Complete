@@ -1,4 +1,3 @@
-#define STB_IMAGE_IMPLEMENTATION
 #include "Material.h"
 
 const int Material::textureIndices[16] =
