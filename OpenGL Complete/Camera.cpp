@@ -4,7 +4,7 @@ Camera::Camera(int width, int height, Input& input) : width(width), height(heigh
 {
 	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
-	proj = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+	proj = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 50.0f);
 	//proj = glm::ortho(0.0f, (float)width, 0.0f, (float)height, 0.1f, 100.0f);
 }
 
