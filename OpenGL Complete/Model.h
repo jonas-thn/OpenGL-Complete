@@ -29,7 +29,6 @@ public:
 private:
 
 	std::vector<Mesh> meshes;
-	std::string directory;
 
 	void LoadModel(std::string path);
 	void ProcessNode(aiNode *node, const aiScene* scene);

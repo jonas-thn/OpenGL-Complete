@@ -109,5 +109,5 @@ void Material::UseMaterial(Shader& shader)
 
 	shader.SetInt("material.diffuse", diffuseIndex);
 	shader.SetInt("material.specular", specularIndex);
-	shader.SetFloat("material.shininess", 128.0);
+	shader.SetFloat("material.shininess", shininess);
 }

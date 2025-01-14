@@ -31,15 +31,8 @@ SDL_Window* window;
 SDL_GLContext glContext;
 bool close = false;
 
-glm::vec3 lightPos1(0.0f, 0.0f, -3.0f);
-const int NR_POINT_LIGHTS = 1;
-std::vector<PointLight*> pointLights;
-
-DirLight* dirLight = nullptr;
-
-Material* material = nullptr;
-
-float vertices[] = {
+float vertices[] = 
+{
 	//positions			 //normals			//texture coords
 	-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
 	0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
@@ -79,7 +72,8 @@ float vertices[] = {
 	-0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f
 };
 
-float lightVertices[] = {
+float lightVertices[] = 
+{
 	-0.5f, -0.5f, -0.5f,
 	 0.5f, -0.5f, -0.5f,
 	 0.5f,  0.5f, -0.5f,
@@ -123,7 +117,18 @@ float lightVertices[] = {
 	-0.5f,  0.5f, -0.5f,
 };
 
-glm::vec3 cubePositions[] = {
+float quadVertices[] = 
+{
+	0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 
+	0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+	-0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+	0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+	-0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+	-0.5f, 0.5f, 0.0f, 0.0f, 1.0f
+};
+
+glm::vec3 cubePositions[] = 
+{
 	glm::vec3(0.0f, 0.0f, 0.0f),
 	glm::vec3(2.0f, 5.0f, -15.0f),
 	glm::vec3(-1.5f, -2.2f, -2.5f),
@@ -136,20 +141,31 @@ glm::vec3 cubePositions[] = {
 	glm::vec3(-1.3f, 1.0f, -1.5f)
 };
 
-unsigned int VBO, VAO, EBO;
-unsigned int lightVBO, lightVAO, lightEBO;
+unsigned int VBO, VAO;
+unsigned int lightVBO, lightVAO;
+unsigned int quadVBO, quadVAO;
 
-Shader* shader = nullptr;
 Input* input = nullptr;
 Camera* camera = nullptr;
 
+Shader* shader = nullptr;
 Shader* lightShader = nullptr;
+Shader* modelShader = nullptr;
+Shader* outlineShader = nullptr;
+Shader* quadShader = nullptr;
+
+Material* material = nullptr;
+Material* modelMaterial = nullptr;
+Material* groundMaterial = nullptr;
+Material* grassMaterial = nullptr;
 
 Model* backpack = nullptr;
 
-Shader* modelShader = nullptr;
+glm::vec3 lightPos1(0.0f, 0.0f, -3.0f);
+const int NR_POINT_LIGHTS = 1;
+std::vector<PointLight*> pointLights;
+DirLight* dirLight = nullptr;
 
-Material* modelMaterial = nullptr;
 
 void init()
 {
@@ -162,6 +178,7 @@ void init()
 	SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
 	window = SDL_CreateWindow("OpenGL Complete", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, SDL_WINDOW_OPENGL);
 
@@ -187,6 +204,8 @@ void init()
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(GL_TRUE);
 	glDepthFunc(GL_LESS);
+
+	glEnable(GL_STENCIL_TEST);
 
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_SetRelativeMouseMode(SDL_TRUE);
@@ -226,26 +245,41 @@ void setup()
 
 	glBindVertexArray(0);
 
+	glGenVertexArrays(1, &quadVAO);
+	glBindVertexArray(quadVAO);
+
+		glGenBuffers(1, &quadVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+
+	glBindVertexArray(0);
+
 	//----------INIT----------
 
-	shader = new Shader("Shaders/vertex.vert", "Shaders/fragment.frag");
 	input = new Input();
 	camera = new Camera(WIDTH, HEIGHT, *input);
 
+	shader = new Shader("Shaders/vertex.vert", "Shaders/fragment.frag");
 	lightShader = new Shader("Shaders/lightVertex.vert", "Shaders/lightFragment.frag");
+	modelShader = new Shader("Shaders/modelVertex.vert", "Shaders/modelFragment.frag");
+	outlineShader = new Shader("Shaders/outlineVertex.vert", "Shaders/outlineFragment.frag");
+	quadShader = new Shader("Shaders/quadVertex.vert", "Shaders/quadFragment.frag");
 
 	PointLight* pointLight1 = new PointLight(lightPos1, glm::vec3(0.1, 0.1, 0.1), glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, 1.0), 1.0f, 0.3, 0.2);
 	pointLights.push_back(pointLight1);
-
 	dirLight = new DirLight(glm::vec3(0.5, 1.0, 0.2), glm::vec3(0.1, 0.1, 0.1), glm::vec3(0.4, 0.4, 0.4), glm::vec3(1.0, 1.0, 1.0));
 
 	material = new Material(0, 1, 128, "./Textures/container2.png", "./Textures/container2_specular.png");
+	modelMaterial = new Material(2, 3, 128, "./Models/diffuse.jpg", "./Models/specular.jpg");
+	grassMaterial = new Material(4, 5, 16, "./Textures/grass.png", "./Textures/no_specular.png");
+	groundMaterial = new Material(6, 7, 16, "./Textures/concreteTexture.png", "./Textures/no_specular.png");
 
 	backpack = new Model("./Models/backpack.obj");
-
-	modelShader = new Shader("Shaders/modelVertex.vert", "Shaders/modelFragment.frag");
-
-	modelMaterial = new Material(2, 3, 128, "./Models/diffuse.jpg", "./Models/specular.jpg");
 }
 
 void process_input()
@@ -261,9 +295,13 @@ void update(float deltaTime)
 void render()
 {
 	glClearColor(0.28f, 0.21f, 0.15f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	//----------LIGHT----------
+
+	glStencilFunc(GL_ALWAYS, 1, 0xFF); //light komplett zu ref 1 setzen (ALWAYS = stencil test immer bestanden)
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE); //nur setzen wenn depth und stencil test bestanden
+	glStencilMask(0xFF); //stencil buffer schreiben an
 
 	lightShader->UseShader();
 	lightShader->SetVec3("lightColor", glm::vec3(1, 1, 1));
@@ -276,6 +314,24 @@ void render()
 	glBindVertexArray(lightVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
+
+	//----------OUTLINE----------
+
+	glStencilFunc(GL_NOTEQUAL, 1, 0xFF); //wenn nicht 1, dann zeichnen
+	glStencilMask(0x00); //stencil buffer schreiben deaktivieren
+
+	outlineShader->UseShader();
+	lightModel = glm::scale(lightModel, glm::vec3(1.1, 1.1, 1.1));
+	outlineShader->SetMat4("model", lightModel);
+	outlineShader->SetMat4("view", camera->GetView());
+	outlineShader->SetMat4("proj", camera->GetProj());
+
+
+	glBindVertexArray(lightVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+
+	glStencilFunc(GL_ALWAYS, 1, 0xFF); //objekte mit ref 1 beschreiben
 
 	//----------BOXES----------
 
@@ -333,6 +389,28 @@ void render()
 
 	backpack->Draw(*modelShader);
 
+	//----------GROUND----------
+
+	quadShader->UseShader();
+	glm::mat4 groundModel = glm::mat4(1.0f);
+	groundModel = glm::scale(groundModel, glm::vec3(8.0f, 8.0f, 8.0f));
+	groundModel = glm::rotate(groundModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	groundModel = glm::translate(groundModel, glm::vec3(0.9f, -0.4f, 0.3f));
+	quadShader->SetMat4("model", groundModel);
+	quadShader->SetMat4("view", camera->GetView());
+	quadShader->SetMat4("proj", camera->GetProj());
+
+	groundMaterial->UseMaterial(*quadShader);
+	quadShader->SetVec3("colorTint", glm::vec3(0.5, 0.4, 0.3));
+
+	glBindVertexArray(quadVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+
+
+	glStencilMask(0xFF);
+
 	SDL_GL_SwapWindow(window);
 }
 
@@ -357,6 +435,10 @@ void cleanup()
 	delete backpack;
 	delete modelShader;
 	delete modelMaterial;
+	delete outlineShader;
+	delete quadShader;
+	delete grassMaterial;
+	delete groundMaterial;
 }
 
 int main(int argc, char* argv[])
