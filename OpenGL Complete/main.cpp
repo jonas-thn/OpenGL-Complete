@@ -407,6 +407,21 @@ void render()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
+	//----------GRASS----------
+
+	quadShader->UseShader();
+	glm::mat4 grassModel = glm::mat4(1.0f);
+	grassModel = glm::translate(grassModel, glm::vec3(6.5f, -1.9f, 0.0f));
+	quadShader->SetMat4("model", grassModel);
+	quadShader->SetMat4("view", camera->GetView());
+	quadShader->SetMat4("proj", camera->GetProj());
+
+	grassMaterial->UseMaterial(*quadShader);
+	quadShader->SetVec3("colorTint", glm::vec3(0.7, 0.7, 0.7));
+
+	glBindVertexArray(quadVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
 
 
 	glStencilMask(0xFF);
