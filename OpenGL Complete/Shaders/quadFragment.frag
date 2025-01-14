@@ -18,5 +18,9 @@ uniform vec3 colorTint;
 void main()
 {
 	vec4 tex = texture(material.diffuse, texcoord);
+
+	if(tex.a < 0.1)
+		discard;
+
 	FragColor = vec4(tex.rgb * colorTint, tex.a);
 }
