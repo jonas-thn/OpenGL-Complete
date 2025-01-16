@@ -49,6 +49,7 @@ Material* material = nullptr;
 Material* modelMaterial = nullptr;
 Material* groundMaterial = nullptr;
 Material* grassMaterial = nullptr;
+Material* windowMaterial = nullptr;
 
 Model* backpack = nullptr;
 
@@ -97,6 +98,10 @@ void init()
 	glDepthFunc(GL_LESS);
 
 	glEnable(GL_STENCIL_TEST);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_SetRelativeMouseMode(SDL_TRUE);
@@ -168,7 +173,8 @@ void setup()
 	material = new Material(0, 1, 128, "./Textures/container2.png", "./Textures/container2_specular.png");
 	modelMaterial = new Material(2, 3, 128, "./Models/diffuse.jpg", "./Models/specular.jpg");
 	grassMaterial = new Material(4, 5, 16, "./Textures/grass.png", "./Textures/no_specular.png");
-	groundMaterial = new Material(6, 7, 16, "./Textures/concreteTexture.png", "./Textures/no_specular.png");
+	groundMaterial = new Material(6, 5, 16, "./Textures/concreteTexture.png", "./Textures/no_specular.png");
+	windowMaterial = new Material(7, 5, 16, "./Textures/window.png", "./Textures/no_specular.png");
 
 	backpack = new Model("./Models/backpack.obj");
 }
@@ -317,6 +323,22 @@ void render()
 		glBindVertexArray(0);
 	}
 
+	//----------GRASS----------
+
+	quadShader->UseShader();
+	quadShader->SetMat4("view", camera->GetView());
+	quadShader->SetMat4("proj", camera->GetProj());
+
+	windowMaterial->UseMaterial(*quadShader);
+	quadShader->SetVec3("colorTint", glm::vec3(1.0, 1.0, 1.0));
+
+	glm::mat4 windowModel = glm::mat4(1.0f);
+	windowModel = glm::translate(windowModel, glm::vec3(5, 0, 0));
+	quadShader->SetMat4("model", windowModel);
+	glBindVertexArray(quadVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
 	glStencilMask(0xFF);
 
 	SDL_GL_SwapWindow(window);
@@ -347,6 +369,7 @@ void cleanup()
 	delete quadShader;
 	delete grassMaterial;
 	delete groundMaterial;
+	delete windowMaterial;
 }
 
 int main(int argc, char* argv[])
