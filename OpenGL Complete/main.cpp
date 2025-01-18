@@ -1,6 +1,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <map>
 
 #define GLEW_STATIC
 #include <GL/glew.h>
@@ -323,21 +324,36 @@ void render()
 		glBindVertexArray(0);
 	}
 
-	//----------GRASS----------
+	//----------WINDOWS (transparent)----------
 
-	quadShader->UseShader();
-	quadShader->SetMat4("view", camera->GetView());
-	quadShader->SetMat4("proj", camera->GetProj());
+	//sort transparent objects by distance
+	std::map<float, glm::vec3> sorted;
 
-	windowMaterial->UseMaterial(*quadShader);
-	quadShader->SetVec3("colorTint", glm::vec3(1.0, 1.0, 1.0));
+	for (unsigned int i = 0; i < windowPositions.size(); i++)
+	{
+		float distance = glm::length(camera->GetPos() - windowPositions[i]);
+		sorted[distance] = windowPositions[i];
+	}
 
-	glm::mat4 windowModel = glm::mat4(1.0f);
-	windowModel = glm::translate(windowModel, glm::vec3(5, 0, 0));
-	quadShader->SetMat4("model", windowModel);
-	glBindVertexArray(quadVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	glm::mat4 windowModel;
+	for (std::map<float, glm::vec3>::reverse_iterator it = sorted.rbegin(); it != sorted.rend(); ++it)
+	{
+		windowModel = glm::mat4(1.0f);
+		windowModel = glm::translate(windowModel, it->second);
+
+		quadShader->UseShader();
+		quadShader->SetMat4("view", camera->GetView());
+		quadShader->SetMat4("proj", camera->GetProj());
+
+		windowMaterial->UseMaterial(*quadShader);
+		quadShader->SetVec3("colorTint", glm::vec3(1.0, 1.0, 1.0));
+
+		quadShader->SetMat4("model", windowModel);
+
+		glBindVertexArray(quadVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
 
 	glStencilMask(0xFF);
 

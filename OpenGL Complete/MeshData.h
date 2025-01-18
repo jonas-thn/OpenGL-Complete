@@ -122,3 +122,9 @@ glm::vec3 grassPositions[] =
 	glm::vec3(7.2f, -1.9f, -4.1f),
 	glm::vec3(7.6f, -1.9f, -2.0f),
 };
+
+std::vector<glm::vec3> windowPositions =
+{
+	glm::vec3(5, 0, 0),
+	glm::vec3(5, -1, -1)
+};
