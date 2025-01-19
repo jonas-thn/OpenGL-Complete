@@ -65,6 +65,20 @@ DirLight* dirLight = nullptr;
 
 unsigned int textureColorbuffer;
 
+int GetNextTextureIndex()
+{
+	static int number = 1;
+	if(number < 30)
+	{
+		return number++;
+	}
+	else
+	{
+		return 0;
+		std::cout << "Texture Index Error" << std::endl;
+	}
+}
+
 void Init()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -183,7 +197,7 @@ void Setup()
 
 	//texture framebuffer attachment
 	glGenTextures(1, &textureColorbuffer);
-	glActiveTexture(GL_TEXTURE10);
+	glActiveTexture(GL_TEXTURE31);
 	glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -222,11 +236,11 @@ void Setup()
 	pointLights.push_back(pointLight1);
 	dirLight = new DirLight(glm::vec3(0.5, 1.0, 0.2), glm::vec3(0.1, 0.1, 0.1), glm::vec3(0.4, 0.4, 0.4), glm::vec3(1.0, 1.0, 1.0));
 
-	material = new Material(0, 1, 128, "./Textures/container2.png", "./Textures/container2_specular.png");
-	modelMaterial = new Material(2, 3, 128, "./Models/diffuse.jpg", "./Models/specular.jpg");
-	grassMaterial = new Material(4, 5, 16, "./Textures/grass.png", "./Textures/no_specular.png");
-	groundMaterial = new Material(6, 5, 16, "./Textures/concreteTexture.png", "./Textures/no_specular.png");
-	windowMaterial = new Material(7, 5, 16, "./Textures/window.png", "./Textures/no_specular.png");
+	material = new Material(GetNextTextureIndex(), GetNextTextureIndex(), 128, "./Textures/container2.png", "./Textures/container2_specular.png");
+	modelMaterial = new Material(GetNextTextureIndex(), GetNextTextureIndex(), 128, "./Models/diffuse.jpg", "./Models/specular.jpg");
+	grassMaterial = new Material(GetNextTextureIndex(), 0, 16, "./Textures/grass.png", "./Textures/no_specular.png");
+	groundMaterial = new Material(GetNextTextureIndex(), 0, 16, "./Textures/concreteTexture.png", "./Textures/no_specular.png");
+	windowMaterial = new Material(GetNextTextureIndex(), 0, 16, "./Textures/window.png", "./Textures/no_specular.png");
 
 	backpack = new Model("./Models/backpack.obj");
 }
@@ -423,9 +437,9 @@ void Render()
 	screenShader->UseShader();
 	glBindVertexArray(screenVAO);
 	glDisable(GL_DEPTH_TEST);
-	glActiveTexture(GL_TEXTURE10);
+	glActiveTexture(GL_TEXTURE31);
 	glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-	screenShader->SetInt("screenTexture", 10);
+	screenShader->SetInt("screenTexture", 31);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	SDL_GL_SwapWindow(window);
