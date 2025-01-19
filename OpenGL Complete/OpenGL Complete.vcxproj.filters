@@ -57,6 +57,8 @@
     <None Include="Shaders\outlineVertex.vert" />
     <None Include="Shaders\quadFragment.frag" />
     <None Include="Shaders\quadVertex.vert" />
+    <None Include="Shaders\screenVertex.vert" />
+    <None Include="Shaders\screenFragment.frag" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h">

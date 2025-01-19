@@ -91,11 +91,21 @@ float lightVertices[] =
 float quadVertices[] =
 {
 	0.5f, 0.5f, 0.0f, 1.0f, 1.0f,
-	0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
 	-0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
 	0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+	0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+	-0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
 	-0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
-	-0.5f, 0.5f, 0.0f, 0.0f, 1.0f
+};
+
+float screenVertices[] = {
+	// positions // texCoords
+	-1.0f, 1.0f, 0.0f, 1.0f,
+	-1.0f, -1.0f, 0.0f, 0.0f,
+	1.0f, -1.0f, 1.0f, 0.0f,
+	-1.0f, 1.0f, 0.0f, 1.0f,
+	1.0f, -1.0f, 1.0f, 0.0f,
+	1.0f, 1.0f, 1.0f, 1.0f
 };
 
 glm::vec3 cubePositions[] =

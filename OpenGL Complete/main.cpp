@@ -36,6 +36,9 @@ bool close = false;
 unsigned int VBO, VAO;
 unsigned int lightVBO, lightVAO;
 unsigned int quadVBO, quadVAO;
+unsigned int screenVBO, screenVAO;
+
+unsigned int fbo;
 
 Input* input = nullptr;
 Camera* camera = nullptr;
@@ -45,6 +48,7 @@ Shader* lightShader = nullptr;
 Shader* modelShader = nullptr;
 Shader* outlineShader = nullptr;
 Shader* quadShader = nullptr;
+Shader* screenShader = nullptr;
 
 Material* material = nullptr;
 Material* modelMaterial = nullptr;
@@ -59,8 +63,9 @@ const int NR_POINT_LIGHTS = 1;
 std::vector<PointLight*> pointLights;
 DirLight* dirLight = nullptr;
 
+unsigned int textureColorbuffer;
 
-void init()
+void Init()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
 
@@ -103,12 +108,15 @@ void init()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	/*glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CCW);*/
 
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 }
 
-void setup()
+void Setup()
 {
 	//----------VBO, VAO, EBO----------
 
@@ -156,6 +164,48 @@ void setup()
 
 	glBindVertexArray(0);
 
+	glGenVertexArrays(1, &screenVAO);
+	glBindVertexArray(screenVAO);
+
+		glGenBuffers(1, &screenVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, screenVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(screenVertices), screenVertices, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+
+	glBindVertexArray(0);
+
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+	//texture framebuffer attachment
+	glGenTextures(1, &textureColorbuffer);
+	glActiveTexture(GL_TEXTURE10);
+	glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
+
+	//renderbuffer object framebuffer attachment
+	unsigned int rbo;
+	glGenRenderbuffers(1, &rbo);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, WIDTH, HEIGHT);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
+		std::cout << "Framebuffer Not Complete Error" << std::endl;
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 	//----------INIT----------
 
 	input = new Input();
@@ -166,6 +216,7 @@ void setup()
 	modelShader = new Shader("Shaders/modelVertex.vert", "Shaders/modelFragment.frag");
 	outlineShader = new Shader("Shaders/outlineVertex.vert", "Shaders/outlineFragment.frag");
 	quadShader = new Shader("Shaders/quadVertex.vert", "Shaders/quadFragment.frag");
+	screenShader = new Shader("Shaders/screenVertex.vert", "Shaders/screenFragment.frag");
 
 	PointLight* pointLight1 = new PointLight(lightPos1, glm::vec3(0.1, 0.1, 0.1), glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, 1.0), 1.0f, 0.3, 0.2);
 	pointLights.push_back(pointLight1);
@@ -180,21 +231,18 @@ void setup()
 	backpack = new Model("./Models/backpack.obj");
 }
 
-void process_input()
+void ProcessInput()
 {
 	input->HandleInput();
 	close = input->GetQuit();
 }
-void update(float deltaTime)
+void Update(float deltaTime)
 {
 	camera->UpdateView(deltaTime);
 }
 
-void render()
+void DrawScene()
 {
-	glClearColor(0.28f, 0.21f, 0.15f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
 	//----------LIGHT----------
 
 	glStencilFunc(GL_ALWAYS, 1, 0xFF); //light komplett zu ref 1 setzen (ALWAYS = stencil test immer bestanden)
@@ -356,15 +404,44 @@ void render()
 	}
 
 	glStencilMask(0xFF);
+}
+
+void Render()
+{
+	//first pass
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glClearColor(0.28f, 0.21f, 0.15f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+	DrawScene();
+
+	//second pass
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClearColor(0.28f, 0.21f, 0.15f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	screenShader->UseShader();
+	glBindVertexArray(screenVAO);
+	glDisable(GL_DEPTH_TEST);
+	glActiveTexture(GL_TEXTURE10);
+	glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+	screenShader->SetInt("screenTexture", 10);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	SDL_GL_SwapWindow(window);
 }
 
-void cleanup()
+void Cleanup()
 {
-	SDL_DestroyWindow(window);
-	SDL_GL_DeleteContext(glContext);
-	SDL_Quit();
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteVertexArrays(1, &lightVAO);
+	glDeleteVertexArrays(1, &quadVAO);
+
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &lightVBO);
+	glDeleteBuffers(1, &quadVBO);
+
+	glDeleteFramebuffers(1, &fbo);
 
 	delete shader;
 	delete input;
@@ -386,12 +463,16 @@ void cleanup()
 	delete grassMaterial;
 	delete groundMaterial;
 	delete windowMaterial;
+
+	SDL_DestroyWindow(window);
+	SDL_GL_DeleteContext(glContext);
+	SDL_Quit();
 }
 
 int main(int argc, char* argv[])
 {
-	init();
-	setup();
+	Init();
+	Setup();
 
 	float lastFrameTime = SDL_GetTicks();
 
@@ -401,12 +482,12 @@ int main(int argc, char* argv[])
 
 		lastFrameTime = SDL_GetTicks();
 
-		process_input();
-		update(deltaTime);
-		render();
+		ProcessInput();
+		Update(deltaTime);
+		Render();
 	}
 
-	cleanup();
+	Cleanup();
 
 	return 0;
 }

@@ -172,6 +172,8 @@
     <None Include="Shaders\outlineVertex.vert" />
     <None Include="Shaders\quadFragment.frag" />
     <None Include="Shaders\quadVertex.vert" />
+    <None Include="Shaders\screenFragment.frag" />
+    <None Include="Shaders\screenVertex.vert" />
     <None Include="Shaders\vertex.vert" />
   </ItemGroup>
   <ItemGroup>
