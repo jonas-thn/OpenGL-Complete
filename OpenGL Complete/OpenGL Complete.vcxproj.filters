@@ -45,6 +45,9 @@
     <ClCompile Include="stb_image.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="Skybox.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\fragment.frag" />
@@ -59,6 +62,8 @@
     <None Include="Shaders\quadVertex.vert" />
     <None Include="Shaders\screenVertex.vert" />
     <None Include="Shaders\screenFragment.frag" />
+    <None Include="Shaders\skyboxFragment.frag" />
+    <None Include="Shaders\skyboxVertex.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h">
@@ -89,6 +94,9 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="MeshData.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Skybox.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

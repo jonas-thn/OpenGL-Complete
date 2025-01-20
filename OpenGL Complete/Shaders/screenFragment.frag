@@ -54,7 +54,7 @@ void main()
 	vec3 sampleTex[9];
 	for(int i = 0; i < 9; i ++)
 	{
-		sampleTex[i] = vec3(texture(screenTexture, TexCoords.st + offsets[i]));
+		sampleTex[i] = vec3(texture(screenTexture, TexCoords.rg + offsets[i]));
 	}
 
 	vec3 col = vec3(0.0);
@@ -63,5 +63,5 @@ void main()
 		col += sampleTex[i] * edgeDetectionKernel[i];
 	}
 
-	FragColor = vec4(col, 1.0);
+	//FragColor = vec4(col, 1.0);
 }

@@ -160,6 +160,7 @@
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -174,6 +175,8 @@
     <None Include="Shaders\quadVertex.vert" />
     <None Include="Shaders\screenFragment.frag" />
     <None Include="Shaders\screenVertex.vert" />
+    <None Include="Shaders\skyboxFragment.frag" />
+    <None Include="Shaders\skyboxVertex.vert" />
     <None Include="Shaders\vertex.vert" />
   </ItemGroup>
   <ItemGroup>
@@ -186,6 +189,7 @@
     <ClInclude Include="PointLight.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="MeshData.h" />
+    <ClInclude Include="Skybox.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

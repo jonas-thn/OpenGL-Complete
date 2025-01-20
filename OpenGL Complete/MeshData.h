@@ -138,3 +138,4 @@ std::vector<glm::vec3> windowPositions =
 	glm::vec3(5, 0, 0),
 	glm::vec3(5, -1, -1)
 };
+

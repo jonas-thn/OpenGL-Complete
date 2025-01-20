@@ -25,6 +25,7 @@
 #include "DirLight.h"
 #include "Model.h"
 #include "MeshData.h"
+#include "Skybox.h"
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -49,6 +50,7 @@ Shader* modelShader = nullptr;
 Shader* outlineShader = nullptr;
 Shader* quadShader = nullptr;
 Shader* screenShader = nullptr;
+Shader* skyboxShader = nullptr;
 
 Material* material = nullptr;
 Material* modelMaterial = nullptr;
@@ -64,6 +66,8 @@ std::vector<PointLight*> pointLights;
 DirLight* dirLight = nullptr;
 
 unsigned int textureColorbuffer;
+
+Skybox* skybox = nullptr;
 
 int GetNextTextureIndex()
 {
@@ -220,6 +224,7 @@ void Setup()
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+
 	//----------INIT----------
 
 	input = new Input();
@@ -231,6 +236,7 @@ void Setup()
 	outlineShader = new Shader("Shaders/outlineVertex.vert", "Shaders/outlineFragment.frag");
 	quadShader = new Shader("Shaders/quadVertex.vert", "Shaders/quadFragment.frag");
 	screenShader = new Shader("Shaders/screenVertex.vert", "Shaders/screenFragment.frag");
+	skyboxShader = new Shader("Shaders/skyboxVertex.vert", "Shaders/skyboxFragment.frag");
 
 	PointLight* pointLight1 = new PointLight(lightPos1, glm::vec3(0.1, 0.1, 0.1), glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, 1.0), 1.0f, 0.3, 0.2);
 	pointLights.push_back(pointLight1);
@@ -243,6 +249,8 @@ void Setup()
 	windowMaterial = new Material(GetNextTextureIndex(), 0, 16, "./Textures/window.png", "./Textures/no_specular.png");
 
 	backpack = new Model("./Models/backpack.obj");
+
+	skybox = new Skybox();
 }
 
 void ProcessInput()
@@ -426,6 +434,16 @@ void Render()
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	glClearColor(0.28f, 0.21f, 0.15f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+	//skybox
+	glDisable(GL_STENCIL_TEST);
+	glDepthFunc(GL_LEQUAL);
+	glDepthMask(GL_FALSE);
+	skybox->Draw(*skyboxShader, *camera, GetNextTextureIndex());
+	glDepthMask(GL_TRUE);
+	glDepthFunc(GL_LESS);
+	glEnable(GL_STENCIL_TEST);
+
 	glEnable(GL_DEPTH_TEST);
 	DrawScene();
 
@@ -477,6 +495,7 @@ void Cleanup()
 	delete grassMaterial;
 	delete groundMaterial;
 	delete windowMaterial;
+	delete skyboxShader;
 
 	SDL_DestroyWindow(window);
 	SDL_GL_DeleteContext(glContext);
