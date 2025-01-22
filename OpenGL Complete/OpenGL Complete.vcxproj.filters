@@ -64,6 +64,8 @@
     <None Include="Shaders\screenFragment.frag" />
     <None Include="Shaders\skyboxFragment.frag" />
     <None Include="Shaders\skyboxVertex.vert" />
+    <None Include="Shaders\reflectionFragment.frag" />
+    <None Include="Shaders\reflectionVertex.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h">

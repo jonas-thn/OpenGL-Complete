@@ -173,6 +173,8 @@
     <None Include="Shaders\outlineVertex.vert" />
     <None Include="Shaders\quadFragment.frag" />
     <None Include="Shaders\quadVertex.vert" />
+    <None Include="Shaders\reflectionFragment.frag" />
+    <None Include="Shaders\reflectionVertex.vert" />
     <None Include="Shaders\screenFragment.frag" />
     <None Include="Shaders\screenVertex.vert" />
     <None Include="Shaders\skyboxFragment.frag" />

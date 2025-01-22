@@ -120,3 +120,8 @@ void Skybox::Draw(Shader& shader, Camera& camera, int textureIndex)
     glBindVertexArray(0);
 }
 
+unsigned int Skybox::GetCubemapTexture()
+{
+    return cubemapTexture;
+}
+

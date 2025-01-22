@@ -38,6 +38,8 @@ unsigned int VBO, VAO;
 unsigned int lightVBO, lightVAO;
 unsigned int quadVBO, quadVAO;
 unsigned int screenVBO, screenVAO;
+unsigned int cubeTextureVBO, cubeTextureVAO;
+unsigned int cubeNormalVBO, cubeNormalVAO;
 
 unsigned int fbo;
 
@@ -51,6 +53,7 @@ Shader* outlineShader = nullptr;
 Shader* quadShader = nullptr;
 Shader* screenShader = nullptr;
 Shader* skyboxShader = nullptr;
+Shader* reflectionShader = nullptr;
 
 Material* material = nullptr;
 Material* modelMaterial = nullptr;
@@ -224,6 +227,28 @@ void Setup()
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	glGenVertexArrays(1, &cubeTextureVAO);
+	glGenBuffers(1, &cubeTextureVBO);
+	glBindVertexArray(cubeTextureVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, cubeTextureVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(cubeTextureVertices), &cubeTextureVertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glBindVertexArray(0);
+
+	glGenVertexArrays(1, &cubeNormalVAO);
+	glGenBuffers(1, &cubeNormalVBO);
+	glBindVertexArray(cubeNormalVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, cubeNormalVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(cubeNormalVertices), &cubeNormalVertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glBindVertexArray(0);
+
 
 	//----------INIT----------
 
@@ -237,6 +262,7 @@ void Setup()
 	quadShader = new Shader("Shaders/quadVertex.vert", "Shaders/quadFragment.frag");
 	screenShader = new Shader("Shaders/screenVertex.vert", "Shaders/screenFragment.frag");
 	skyboxShader = new Shader("Shaders/skyboxVertex.vert", "Shaders/skyboxFragment.frag");
+	reflectionShader = new Shader("Shaders/reflectionVertex.vert", "Shaders/reflectionFragment.frag");
 
 	PointLight* pointLight1 = new PointLight(lightPos1, glm::vec3(0.1, 0.1, 0.1), glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, 1.0), 1.0f, 0.3, 0.2);
 	pointLights.push_back(pointLight1);
@@ -394,6 +420,49 @@ void DrawScene()
 		glBindVertexArray(0);
 	}
 
+	//----------REFLECTION CUBE----------
+
+	reflectionShader->UseShader();
+	glm::mat4 reflectionModel = glm::mat4(1.0f);
+	reflectionModel = glm::translate(reflectionModel, glm::vec3(5, 0, 0));
+
+	reflectionShader->SetMat4("model", reflectionModel);
+	reflectionShader->SetMat4("view", camera->GetView());
+	reflectionShader->SetMat4("proj", camera->GetProj());
+
+	reflectionShader->SetVec3("cameraPos", camera->GetPos());
+	reflectionShader->SetInt("shouldRefract", 0);
+
+	int skyboxTextureIndex = GetNextTextureIndex();
+	glActiveTexture(GL_TEXTURE0 + skyboxTextureIndex);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetCubemapTexture());
+	reflectionShader->SetInt("cubemapTexture", skyboxTextureIndex);
+
+	glBindVertexArray(cubeNormalVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(cubeNormalVAO);
+
+	//----------REFRACTION CUBE----------
+
+	reflectionShader->UseShader();
+	glm::mat4 refractionModel = glm::mat4(1.0f);
+	refractionModel = glm::translate(refractionModel, glm::vec3(4, 0, 0));
+
+	reflectionShader->SetMat4("model", refractionModel);
+	reflectionShader->SetMat4("view", camera->GetView());
+	reflectionShader->SetMat4("proj", camera->GetProj());
+
+	reflectionShader->SetVec3("cameraPos", camera->GetPos());
+	reflectionShader->SetInt("shouldRefract", 1);
+
+	glActiveTexture(GL_TEXTURE0 + skyboxTextureIndex);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetCubemapTexture());
+	reflectionShader->SetInt("cubemapTexture", skyboxTextureIndex);
+
+	glBindVertexArray(cubeNormalVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(cubeNormalVAO);
+
 	//----------WINDOWS (transparent)----------
 
 	//sort transparent objects by distance
@@ -468,10 +537,16 @@ void Cleanup()
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteVertexArrays(1, &lightVAO);
 	glDeleteVertexArrays(1, &quadVAO);
+	glDeleteVertexArrays(1, &screenVAO);
+	glDeleteVertexArrays(1, &cubeTextureVAO);
+	glDeleteVertexArrays(1, &cubeNormalVAO);
 
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &lightVBO);
 	glDeleteBuffers(1, &quadVBO);
+	glDeleteBuffers(1, &screenVBO);
+	glDeleteBuffers(1, &cubeTextureVBO);
+	glDeleteBuffers(1, &cubeNormalVBO);
 
 	glDeleteFramebuffers(1, &fbo);
 
@@ -496,6 +571,7 @@ void Cleanup()
 	delete groundMaterial;
 	delete windowMaterial;
 	delete skyboxShader;
+	delete reflectionShader;
 
 	SDL_DestroyWindow(window);
 	SDL_GL_DeleteContext(glContext);

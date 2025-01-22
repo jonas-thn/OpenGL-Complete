@@ -23,6 +23,8 @@ public:
 
 	void Draw(Shader& shader, Camera& camera, int textureIndex);
 
+	unsigned int GetCubemapTexture();
+
 private:
 	unsigned int LoadCubemap();
 
