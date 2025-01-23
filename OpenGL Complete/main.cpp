@@ -72,6 +72,8 @@ unsigned int textureColorbuffer;
 
 Skybox* skybox = nullptr;
 
+unsigned int uboMatrices;
+
 int GetNextTextureIndex()
 {
 	static int number = 1;
@@ -277,6 +279,22 @@ void Setup()
 	backpack = new Model("./Models/backpack.obj");
 
 	skybox = new Skybox();
+
+	unsigned int matricesIndex = glGetUniformBlockIndex(shader->GetID(), "Matrices");
+	glUniformBlockBinding(shader->GetID(), matricesIndex, 0);
+
+	glGenBuffers(1, &uboMatrices);
+
+	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 2 * sizeof(glm::mat4));
+
+	glm::mat4 projection = camera->GetProj();
+	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void ProcessInput()
@@ -499,6 +517,11 @@ void DrawScene()
 
 void Render()
 {
+	glm::mat4 view = camera->GetView();
+	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
 	//first pass
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	glClearColor(0.28f, 0.21f, 0.15f, 1.0f);

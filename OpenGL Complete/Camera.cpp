@@ -50,3 +50,5 @@ glm::vec3 Camera::GetPos()
 {
 	return cameraPos;
 }
+
+
