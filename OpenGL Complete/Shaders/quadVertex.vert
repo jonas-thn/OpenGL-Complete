@@ -5,9 +5,13 @@ layout (location = 1) in vec2 aTexcoord;
 
 out vec2 texcoord;
 
+layout (std140) uniform Matrices
+{
+	mat4 proj;
+	mat4 view;
+};
+
 uniform mat4 model;
-uniform mat4 view;
-uniform mat4 proj;
 
 void main()
 {

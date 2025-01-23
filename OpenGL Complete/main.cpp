@@ -281,7 +281,18 @@ void Setup()
 	skybox = new Skybox();
 
 	unsigned int matricesIndex = glGetUniformBlockIndex(shader->GetID(), "Matrices");
+	unsigned int reflectionMatricesIndex = glGetUniformBlockIndex(reflectionShader->GetID(), "Matrices");
+	unsigned int quadMatricesIndex = glGetUniformBlockIndex(quadShader->GetID(), "Matrices");
+	unsigned int outlineMatricesIndex = glGetUniformBlockIndex(outlineShader->GetID(), "Matrices");
+	unsigned int modelMatricesIndex = glGetUniformBlockIndex(modelShader->GetID(), "Matrices");
+	unsigned int lightMatricesIndex = glGetUniformBlockIndex(lightShader->GetID(), "Matrices");
+	
 	glUniformBlockBinding(shader->GetID(), matricesIndex, 0);
+	glUniformBlockBinding(reflectionShader->GetID(), reflectionMatricesIndex, 0);
+	glUniformBlockBinding(quadShader->GetID(), quadMatricesIndex, 0);
+	glUniformBlockBinding(outlineShader->GetID(), outlineMatricesIndex, 0);
+	glUniformBlockBinding(modelShader->GetID(), modelMatricesIndex, 0);
+	glUniformBlockBinding(lightShader->GetID(), lightMatricesIndex, 0);
 
 	glGenBuffers(1, &uboMatrices);
 
@@ -320,8 +331,6 @@ void DrawScene()
 	glm::mat4 lightModel = glm::mat4(1.0f);
 	lightModel = glm::translate(lightModel, lightPos1);
 	lightShader->SetMat4("model", lightModel);
-	lightShader->SetMat4("view", camera->GetView());
-	lightShader->SetMat4("proj", camera->GetProj());
 
 	glBindVertexArray(lightVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -335,9 +344,6 @@ void DrawScene()
 	outlineShader->UseShader();
 	lightModel = glm::scale(lightModel, glm::vec3(1.1, 1.1, 1.1));
 	outlineShader->SetMat4("model", lightModel);
-	outlineShader->SetMat4("view", camera->GetView());
-	outlineShader->SetMat4("proj", camera->GetProj());
-
 
 	glBindVertexArray(lightVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -359,9 +365,6 @@ void DrawScene()
 	dirLight->UseLight(*shader);
 
 	material->UseMaterial(*shader);
-
-	shader->SetMat4("view", camera->GetView());
-	shader->SetMat4("proj", camera->GetProj());
 
 	glBindVertexArray(VAO);
 
@@ -392,9 +395,6 @@ void DrawScene()
 
 	modelMaterial->UseMaterial(*modelShader);
 
-	modelShader->SetMat4("view", camera->GetView());
-	modelShader->SetMat4("proj", camera->GetProj());
-
 	glm::mat4 backpackModel = glm::mat4(1.0f);
 	backpackModel = glm::translate(backpackModel, glm::vec3(-5, 0, -5));
 	modelShader->SetMat4("model", backpackModel);
@@ -409,8 +409,6 @@ void DrawScene()
 	groundModel = glm::rotate(groundModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	groundModel = glm::translate(groundModel, glm::vec3(0.9f, -0.4f, 0.3f));
 	quadShader->SetMat4("model", groundModel);
-	quadShader->SetMat4("view", camera->GetView());
-	quadShader->SetMat4("proj", camera->GetProj());
 
 	groundMaterial->UseMaterial(*quadShader);
 	quadShader->SetVec3("colorTint", glm::vec3(0.5, 0.4, 0.3));
@@ -422,8 +420,6 @@ void DrawScene()
 	//----------GRASS----------
 
 	quadShader->UseShader();
-	quadShader->SetMat4("view", camera->GetView());
-	quadShader->SetMat4("proj", camera->GetProj());
 
 	grassMaterial->UseMaterial(*quadShader);
 	quadShader->SetVec3("colorTint", glm::vec3(0.7, 0.7, 0.7));
@@ -445,8 +441,6 @@ void DrawScene()
 	reflectionModel = glm::translate(reflectionModel, glm::vec3(5, 0, 0));
 
 	reflectionShader->SetMat4("model", reflectionModel);
-	reflectionShader->SetMat4("view", camera->GetView());
-	reflectionShader->SetMat4("proj", camera->GetProj());
 
 	reflectionShader->SetVec3("cameraPos", camera->GetPos());
 	reflectionShader->SetInt("shouldRefract", 0);
@@ -467,8 +461,6 @@ void DrawScene()
 	refractionModel = glm::translate(refractionModel, glm::vec3(4, 0, 0));
 
 	reflectionShader->SetMat4("model", refractionModel);
-	reflectionShader->SetMat4("view", camera->GetView());
-	reflectionShader->SetMat4("proj", camera->GetProj());
 
 	reflectionShader->SetVec3("cameraPos", camera->GetPos());
 	reflectionShader->SetInt("shouldRefract", 1);
@@ -499,8 +491,6 @@ void DrawScene()
 		windowModel = glm::translate(windowModel, it->second);
 
 		quadShader->UseShader();
-		quadShader->SetMat4("view", camera->GetView());
-		quadShader->SetMat4("proj", camera->GetProj());
 
 		windowMaterial->UseMaterial(*quadShader);
 		quadShader->SetVec3("colorTint", glm::vec3(1.0, 1.0, 1.0));
