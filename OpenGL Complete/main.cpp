@@ -275,7 +275,7 @@ void Setup()
 	screenShader = new Shader("Shaders/screenVertex.vert", "Shaders/screenFragment.frag");
 	skyboxShader = new Shader("Shaders/skyboxVertex.vert", "Shaders/skyboxFragment.frag");
 	reflectionShader = new Shader("Shaders/reflectionVertex.vert", "Shaders/reflectionFragment.frag");
-	houseShader = new Shader("Shaders/houseVertex.vert", "Shaders/houseFragment.frag");
+	houseShader = new Shader("Shaders/houseVertex.vert", "Shaders/houseFragment.frag", "Shaders/houseGeometry.geom");
 
 	PointLight* pointLight1 = new PointLight(lightPos1, glm::vec3(0.1, 0.1, 0.1), glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, 1.0), 1.0f, 0.3, 0.2);
 	pointLights.push_back(pointLight1);

@@ -166,6 +166,7 @@
   <ItemGroup>
     <None Include="Shaders\fragment.frag" />
     <None Include="Shaders\houseFragment.frag" />
+    <None Include="Shaders\houseGeometry.geom" />
     <None Include="Shaders\houseVertex.vert" />
     <None Include="Shaders\lightFragment.frag" />
     <None Include="Shaders\lightVertex.vert" />
