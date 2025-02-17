@@ -228,3 +228,10 @@ float cubeNormalVertices[] = {
 	-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
 	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
 };
+
+float points[] = {
+-0.5f, 0.5f, // top-left
+0.5f, 0.5f, // top-right
+0.5f, -0.5f, // bottom-right
+-0.5f, -0.5f // bottom-left
+};

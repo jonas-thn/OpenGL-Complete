@@ -40,6 +40,7 @@ unsigned int quadVBO, quadVAO;
 unsigned int screenVBO, screenVAO;
 unsigned int cubeTextureVBO, cubeTextureVAO;
 unsigned int cubeNormalVBO, cubeNormalVAO;
+unsigned int houseVBO, houseVAO;
 
 unsigned int fbo;
 
@@ -54,6 +55,7 @@ Shader* quadShader = nullptr;
 Shader* screenShader = nullptr;
 Shader* skyboxShader = nullptr;
 Shader* reflectionShader = nullptr;
+Shader* houseShader = nullptr;
 
 Material* material = nullptr;
 Material* modelMaterial = nullptr;
@@ -251,6 +253,14 @@ void Setup()
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 	glBindVertexArray(0);
 
+	glGenVertexArrays(1, &houseVAO);
+	glGenBuffers(1, &houseVBO);
+	glBindVertexArray(houseVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, houseVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(points), &points, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+	glBindVertexArray(0);
 
 	//----------INIT----------
 
@@ -265,6 +275,7 @@ void Setup()
 	screenShader = new Shader("Shaders/screenVertex.vert", "Shaders/screenFragment.frag");
 	skyboxShader = new Shader("Shaders/skyboxVertex.vert", "Shaders/skyboxFragment.frag");
 	reflectionShader = new Shader("Shaders/reflectionVertex.vert", "Shaders/reflectionFragment.frag");
+	houseShader = new Shader("Shaders/houseVertex.vert", "Shaders/houseFragment.frag");
 
 	PointLight* pointLight1 = new PointLight(lightPos1, glm::vec3(0.1, 0.1, 0.1), glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, 1.0), 1.0f, 0.3, 0.2);
 	pointLights.push_back(pointLight1);
@@ -502,6 +513,12 @@ void DrawScene()
 		glBindVertexArray(0);
 	}
 
+	//----------POINTS -> HOUSE----------
+	houseShader->UseShader();
+	glBindVertexArray(houseVAO);
+	glDrawArrays(GL_POINTS, 0, 4);
+	glBindVertexArray(0);
+
 	glStencilMask(0xFF);
 }
 
@@ -553,6 +570,7 @@ void Cleanup()
 	glDeleteVertexArrays(1, &screenVAO);
 	glDeleteVertexArrays(1, &cubeTextureVAO);
 	glDeleteVertexArrays(1, &cubeNormalVAO);
+	glDeleteVertexArrays(1, &houseVAO);
 
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &lightVBO);
@@ -560,6 +578,7 @@ void Cleanup()
 	glDeleteBuffers(1, &screenVBO);
 	glDeleteBuffers(1, &cubeTextureVBO);
 	glDeleteBuffers(1, &cubeNormalVBO);
+	glDeleteBuffers(1, &houseVBO);
 
 	glDeleteFramebuffers(1, &fbo);
 
@@ -585,6 +604,7 @@ void Cleanup()
 	delete windowMaterial;
 	delete skyboxShader;
 	delete reflectionShader;
+	delete houseShader;
 
 	SDL_DestroyWindow(window);
 	SDL_GL_DeleteContext(glContext);
