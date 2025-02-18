@@ -69,6 +69,8 @@
     <None Include="Shaders\houseVertex.vert" />
     <None Include="Shaders\houseFragment.frag" />
     <None Include="Shaders\houseGeometry.geom" />
+    <None Include="Shaders\grassFragment.frag" />
+    <None Include="Shaders\grassVertex.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h">

@@ -2,6 +2,8 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <cstdlib>
+#include <ctime>
 
 #define GLEW_STATIC
 #include <GL/glew.h>
@@ -56,6 +58,7 @@ Shader* screenShader = nullptr;
 Shader* skyboxShader = nullptr;
 Shader* reflectionShader = nullptr;
 Shader* houseShader = nullptr;
+Shader* grassShader = nullptr;
 
 Material* material = nullptr;
 Material* modelMaterial = nullptr;
@@ -76,6 +79,9 @@ Skybox* skybox = nullptr;
 
 unsigned int uboMatrices;
 
+unsigned int const grassAmount = 256;
+glm::mat4 grassModels[grassAmount];
+
 int GetNextTextureIndex()
 {
 	static int number = 1;
@@ -90,8 +96,15 @@ int GetNextTextureIndex()
 	}
 }
 
+float GenerateRandomFloat(float min, float max) 
+{
+	return min + static_cast<float>(rand()) / RAND_MAX * (max - min);
+}
+
 void Init()
 {
+	std::srand(static_cast<unsigned int>(std::time(nullptr)));
+
 	SDL_Init(SDL_INIT_EVERYTHING);
 
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
@@ -278,6 +291,7 @@ void Setup()
 	skyboxShader = new Shader("Shaders/skyboxVertex.vert", "Shaders/skyboxFragment.frag");
 	reflectionShader = new Shader("Shaders/reflectionVertex.vert", "Shaders/reflectionFragment.frag");
 	houseShader = new Shader("Shaders/houseVertex.vert", "Shaders/houseFragment.frag", "Shaders/houseGeometry.geom");
+	grassShader = new Shader("Shaders/grassVertex.vert", "Shaders/grassFragment.frag");
 
 	PointLight* pointLight1 = new PointLight(lightPos1, glm::vec3(0.1, 0.1, 0.1), glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, 1.0), 1.0f, 0.3, 0.2);
 	pointLights.push_back(pointLight1);
@@ -319,6 +333,18 @@ void Setup()
 	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	for (int i = 0; i < grassAmount; i++)
+	{
+		glm::mat4 tempModel = glm::mat4(1.0f);	
+		glm::mat4 tempRot = glm::rotate(glm::mat4(1.0f), glm::radians(GenerateRandomFloat(0, 360)), glm::vec3(0, 1, 0));
+		float xGrass = GenerateRandomFloat(3.5f, 11.0f);
+		float yGrass = GenerateRandomFloat(-7.0f, 0.5f);
+		//std::cout << "x: " << xGrass << " y: " << yGrass << std::endl;
+		glm::mat4 tempTrans = glm::translate(glm::mat4(1.0f), glm::vec3(xGrass, -1.9f, yGrass));
+		tempModel = tempTrans * tempRot;
+		grassModels[i] = tempModel;
+	}
 }
 
 void ProcessInput()
@@ -432,20 +458,18 @@ void DrawScene()
 
 	//----------GRASS----------
 
-	quadShader->UseShader();
+	grassShader->UseShader();
 
-	grassMaterial->UseMaterial(*quadShader);
-	quadShader->SetVec3("colorTint", glm::vec3(0.7, 0.7, 0.7));
+	grassMaterial->UseMaterial(*grassShader);
+	grassShader->SetVec3("colorTint", glm::vec3(0.7, 0.7, 0.7));
 
-	for (glm::vec3 pos : grassPositions)
+	for (int i = 0; i < grassAmount; i++)
 	{
-		glm::mat4 grassModel = glm::mat4(1.0f);
-		grassModel = glm::translate(grassModel, pos);
-		quadShader->SetMat4("model", grassModel);
-		glBindVertexArray(quadVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glBindVertexArray(0);
+		grassShader->SetMat4("models[" + std::to_string(i) + "]", grassModels[i]);
 	}
+	glBindVertexArray(quadVAO);
+	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, grassAmount);
+	glBindVertexArray(0);
 
 	//----------REFLECTION CUBE----------
 
@@ -516,10 +540,10 @@ void DrawScene()
 	}
 
 	//----------POINTS -> HOUSE----------
-	houseShader->UseShader();
+	/*houseShader->UseShader();
 	glBindVertexArray(houseVAO);
 	glDrawArrays(GL_POINTS, 0, 4);
-	glBindVertexArray(0);
+	glBindVertexArray(0);*/
 
 	glStencilMask(0xFF);
 }
@@ -607,6 +631,7 @@ void Cleanup()
 	delete skyboxShader;
 	delete reflectionShader;
 	delete houseShader;
+	delete grassShader;
 
 	SDL_DestroyWindow(window);
 	SDL_GL_DeleteContext(glContext);

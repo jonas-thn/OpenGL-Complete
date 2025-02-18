@@ -124,6 +124,7 @@ glm::vec3 cubePositions[] =
 
 glm::vec3 grassPositions[] =
 {
+	glm::vec3(3.5f, -1.9f, 0.5f),
 	glm::vec3(7.0f, -1.9f, -3.5f),
 	glm::vec3(8.0f, -1.9f, -3.0f),
 	glm::vec3(6.4f, -1.9f, -2.3f),
