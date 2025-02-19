@@ -19,6 +19,10 @@
 
 #include <assimp/importer.hpp>
 
+#include "ImGui/imgui.h"
+#include "ImGui/imgui_impl_sdl2.h"
+#include "ImGui/imgui_impl_opengl3.h"
+
 #include "Shader.h"
 #include "Input.h"
 #include "Camera.h"
@@ -155,8 +159,24 @@ void Init()
 	glEnable(GL_MULTISAMPLE);
 	glHint(GL_MULTISAMPLE_FILTER_HINT_NV, GL_NICEST);
 
+	//glEnable(GL_FRAMEBUFFER_SRGB);
+
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_SetRelativeMouseMode(SDL_TRUE);
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsLight();
+
+	// Setup Platform/Renderer backends
+	ImGui_ImplSDL2_InitForOpenGL(window, glContext);
+	ImGui_ImplOpenGL3_Init("#version 130");
 }
 
 void Setup()
@@ -360,6 +380,24 @@ void ProcessInput()
 void Update(float deltaTime)
 {
 	camera->UpdateView(deltaTime);
+}
+
+void RenderImGui(bool x)
+{
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplSDL2_NewFrame();
+	ImGui::NewFrame();
+
+	if(x)
+	{
+		ImGui::ShowDemoWindow();
+	}
+
+	ImGui::Render();
+	//glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+	/*glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+	glClear(GL_COLOR_BUFFER_BIT);*/
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 void DrawScene()
@@ -589,6 +627,8 @@ void Render()
 	glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
 	screenShader->SetInt("screenTexture", 31);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	RenderImGui(input->GetX());
 
 	SDL_GL_SwapWindow(window);
 }

@@ -2,6 +2,10 @@
 
 #include <SDL.h>
 
+#include "ImGui/imgui.h"
+#include "ImGui/imgui_impl_sdl2.h"
+#include "ImGui/imgui_impl_opengl3.h"
+
 class Input
 {
 public:
@@ -14,6 +18,7 @@ public:
 	bool GetD();
 	float GetYaw();
 	float GetPitch();
+	bool GetX();
 
 	bool GetSpaceDown();
 
@@ -30,6 +35,7 @@ private:
 	bool s = false;
 	bool a = false;
 	bool d = false;
+	bool x = false;
 
 	bool space = false;
 };

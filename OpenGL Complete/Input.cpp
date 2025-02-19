@@ -44,12 +44,18 @@ float Input::GetPitch()
 	return pitch;
 }
 
+bool Input::GetX()
+{
+	return x;
+}
+
 void Input::HandleInput()
 {
 	space = false;
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
 	{
+		ImGui_ImplSDL2_ProcessEvent(&event);
 		if (event.type == SDL_QUIT)
 		{
 			quit = true;
@@ -80,6 +86,10 @@ void Input::HandleInput()
 			if (event.key.keysym.sym == SDLK_SPACE)
 			{
 				space = true;
+			}
+			if (event.key.keysym.sym == SDLK_x)
+			{
+				x = !x;
 			}
 		}
 
