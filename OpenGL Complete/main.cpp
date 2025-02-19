@@ -36,6 +36,15 @@
 const int WIDTH = 800;
 const int HEIGHT = 600;
 
+enum CurrentScene
+{
+	Scene1,
+	Scene2,
+	Scene3
+};
+
+CurrentScene currentScene = Scene1;
+
 SDL_Window* window;
 SDL_GLContext glContext;
 bool close = false;
@@ -394,9 +403,15 @@ void RenderImGui(bool x)
 
 		ImGui::Begin("Scenes", NULL, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 
-		ImGui::Button("Scene 1", ImVec2(100, 50));
-		ImGui::Button("Scene 2", ImVec2(100, 50));
-		ImGui::Button("Scene 3", ImVec2(100, 50));
+		if (ImGui::Button("Scene 1", ImVec2(100, 50))) {
+			currentScene = Scene1;
+		}
+		if (ImGui::Button("Scene 2", ImVec2(100, 50))) {
+			currentScene = Scene2;
+		}
+		if(ImGui::Button("Scene 3", ImVec2(100, 50))) {
+			currentScene = Scene3;
+		}
 
 		ImGui::End();
 	}
@@ -408,7 +423,7 @@ void RenderImGui(bool x)
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void DrawScene()
+void DrawScene1()
 {
 	//----------LIGHT----------
 
@@ -606,35 +621,50 @@ void Render()
 	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-	//first pass
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	glClearColor(0.28f, 0.21f, 0.15f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	if(currentScene == Scene1)
+	{
+		//first pass
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		glClearColor(0.28f, 0.21f, 0.15f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-	//skybox
-	glDisable(GL_STENCIL_TEST);
-	glDepthFunc(GL_LEQUAL);
-	glDepthMask(GL_FALSE);
-	skybox->Draw(*skyboxShader, *camera, GetNextTextureIndex());
-	glDepthMask(GL_TRUE);
-	glDepthFunc(GL_LESS);
-	glEnable(GL_STENCIL_TEST);
+		//skybox
+		glDisable(GL_STENCIL_TEST);
+		glDepthFunc(GL_LEQUAL);
+		glDepthMask(GL_FALSE);
+		skybox->Draw(*skyboxShader, *camera, GetNextTextureIndex());
+		glDepthMask(GL_TRUE);
+		glDepthFunc(GL_LESS);
+		glEnable(GL_STENCIL_TEST);
 
-	glEnable(GL_DEPTH_TEST);
-	DrawScene();
+		glEnable(GL_DEPTH_TEST);
+		DrawScene1();
 
-	//second pass
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glClearColor(0.28f, 0.21f, 0.15f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+		//second pass
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClearColor(0.28f, 0.21f, 0.15f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
 
-	screenShader->UseShader();
-	glBindVertexArray(screenVAO);
-	glDisable(GL_DEPTH_TEST);
-	glActiveTexture(GL_TEXTURE31);
-	glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-	screenShader->SetInt("screenTexture", 31);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+		screenShader->UseShader();
+		glBindVertexArray(screenVAO);
+		glDisable(GL_DEPTH_TEST);
+		glActiveTexture(GL_TEXTURE31);
+		glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+		screenShader->SetInt("screenTexture", 31);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+	}
+	else if (currentScene == Scene2)
+	{
+		glClearColor(1.0f, 0.0, 0.0, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		//render Scene2
+	}
+	else if (currentScene == Scene3)
+	{
+		glClearColor(0.0, 1.0, 0.0, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		//render Scene3
+	}
 
 	RenderImGui(input->GetX());
 
