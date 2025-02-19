@@ -390,7 +390,15 @@ void RenderImGui(bool x)
 
 	if(x)
 	{
-		ImGui::ShowDemoWindow();
+		ImGui::SetNextWindowPos(ImVec2(0, 0));
+
+		ImGui::Begin("Scenes", NULL, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+		ImGui::Button("Scene 1", ImVec2(100, 50));
+		ImGui::Button("Scene 2", ImVec2(100, 50));
+		ImGui::Button("Scene 3", ImVec2(100, 50));
+
+		ImGui::End();
 	}
 
 	ImGui::Render();
