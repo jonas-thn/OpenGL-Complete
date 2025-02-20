@@ -72,6 +72,7 @@ Shader* skyboxShader = nullptr;
 Shader* reflectionShader = nullptr;
 Shader* houseShader = nullptr;
 Shader* grassShader = nullptr;
+Shader* shadowmapShader = nullptr;
 
 Material* material = nullptr;
 Material* modelMaterial = nullptr;
@@ -327,10 +328,11 @@ void Setup()
 	reflectionShader = new Shader("Shaders/reflectionVertex.vert", "Shaders/reflectionFragment.frag");
 	houseShader = new Shader("Shaders/houseVertex.vert", "Shaders/houseFragment.frag", "Shaders/houseGeometry.geom");
 	grassShader = new Shader("Shaders/grassVertex.vert", "Shaders/grassFragment.frag");
+	shadowmapShader = new Shader("Shaders/shadowmapVertex.vert", "Shaders/shadowmapFragment.frag");
 
 	PointLight* pointLight1 = new PointLight(lightPos1, glm::vec3(0.1, 0.1, 0.1), glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, 1.0), 1.0f, 0.3, 0.2);
 	pointLights.push_back(pointLight1);
-	dirLight = new DirLight(glm::vec3(0.5, 1.0, 0.2), glm::vec3(0.1, 0.1, 0.1), glm::vec3(0.4, 0.4, 0.4), glm::vec3(1.0, 1.0, 1.0));
+	dirLight = new DirLight(glm::vec3(0.5, -1.0, 0.2), glm::vec3(0.1, 0.1, 0.1), glm::vec3(0.4, 0.4, 0.4), glm::vec3(1.0, 1.0, 1.0));
 
 	material = new Material(GetNextTextureIndex(), GetNextTextureIndex(), 128, "./Textures/container2.png", "./Textures/container2_specular.png");
 	modelMaterial = new Material(GetNextTextureIndex(), GetNextTextureIndex(), 128, "./Models/diffuse.jpg", "./Models/specular.jpg");
@@ -618,36 +620,36 @@ void DrawScene1()
 
 void DrawScene2()
 {
-	shader->UseShader();
+	shadowmapShader->UseShader();
 
-	shader->SetVec3("viewPos", camera->GetPos());
+	shadowmapShader->SetVec3("viewPos", camera->GetPos());
 
-	dirLight->UseLight(*shader);
+	dirLight->UseLight(*shadowmapShader);
 
-	woodMaterial->UseMaterial(*shader);
+	woodMaterial->UseMaterial(*shadowmapShader);
 
 	glBindVertexArray(VAO);
 
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(0, 0, 0));
-	shader->SetMat4("model", model);
+	shadowmapShader->SetMat4("model", model);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(-1, 2, -1));
-	shader->SetMat4("model", model);
+	shadowmapShader->SetMat4("model", model);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	model = glm::mat4(1.0f);	
 	model = glm::rotate(model, glm::radians(30.0f), glm::vec3(1, 0, 0));
 	model = glm::translate(model, glm::vec3(1, 1, 2));
-	shader->SetMat4("model", model);
+	shadowmapShader->SetMat4("model", model);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	model = glm::mat4(1.0f);
 	model = glm::scale(model, glm::vec3(10.0f, 0.1f, 10.0f));
 	model = glm::translate(model, glm::vec3(0, -10, 0));
-	shader->SetMat4("model", model);
+	shadowmapShader->SetMat4("model", model);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	glBindVertexArray(0);
@@ -751,11 +753,13 @@ void Cleanup()
 	delete grassMaterial;
 	delete groundMaterial;
 	delete windowMaterial;
+	delete skybox;
 	delete skyboxShader;
 	delete reflectionShader;
 	delete houseShader;
 	delete grassShader;
 	delete woodMaterial;
+	delete shadowmapShader;
 
 	SDL_DestroyWindow(window);
 	SDL_GL_DeleteContext(glContext);
