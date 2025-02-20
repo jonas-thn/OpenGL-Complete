@@ -78,6 +78,7 @@ Material* modelMaterial = nullptr;
 Material* groundMaterial = nullptr;
 Material* grassMaterial = nullptr;
 Material* windowMaterial = nullptr;
+Material* woodMaterial = nullptr;	
 
 Model* backpack = nullptr;
 
@@ -336,6 +337,7 @@ void Setup()
 	grassMaterial = new Material(GetNextTextureIndex(), 0, 16, "./Textures/grass.png", "./Textures/no_specular.png");
 	groundMaterial = new Material(GetNextTextureIndex(), 0, 16, "./Textures/concreteTexture.png", "./Textures/no_specular.png");
 	windowMaterial = new Material(GetNextTextureIndex(), 0, 16, "./Textures/window.png", "./Textures/no_specular.png");
+	woodMaterial = new Material(GetNextTextureIndex(), 0, 16, "./Textures/wood.png", "./Textures/no_specular.png");
 
 	backpack = new Model("./Models/backpack.obj");
 
@@ -614,6 +616,43 @@ void DrawScene1()
 	glStencilMask(0xFF);
 }
 
+void DrawScene2()
+{
+	shader->UseShader();
+
+	shader->SetVec3("viewPos", camera->GetPos());
+
+	dirLight->UseLight(*shader);
+
+	woodMaterial->UseMaterial(*shader);
+
+	glBindVertexArray(VAO);
+
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(0, 0, 0));
+	shader->SetMat4("model", model);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(-1, 2, -1));
+	shader->SetMat4("model", model);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	model = glm::mat4(1.0f);	
+	model = glm::rotate(model, glm::radians(30.0f), glm::vec3(1, 0, 0));
+	model = glm::translate(model, glm::vec3(1, 1, 2));
+	shader->SetMat4("model", model);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	model = glm::mat4(1.0f);
+	model = glm::scale(model, glm::vec3(10.0f, 0.1f, 10.0f));
+	model = glm::translate(model, glm::vec3(0, -10, 0));
+	shader->SetMat4("model", model);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	glBindVertexArray(0);
+}
+
 void Render()
 {
 	glm::mat4 view = camera->GetView();
@@ -652,17 +691,18 @@ void Render()
 		glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
 		screenShader->SetInt("screenTexture", 31);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glEnable(GL_DEPTH_TEST);
 	}
 	else if (currentScene == Scene2)
 	{
-		glClearColor(1.0f, 0.0, 0.0, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		//render Scene2
+		glClearColor(0.3, 0.2, 0.15, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		DrawScene2();
 	}
 	else if (currentScene == Scene3)
 	{
-		glClearColor(0.0, 1.0, 0.0, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClearColor(0.2, 0.3, 0.0, 0.15f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		//render Scene3
 	}
 
@@ -715,6 +755,7 @@ void Cleanup()
 	delete reflectionShader;
 	delete houseShader;
 	delete grassShader;
+	delete woodMaterial;
 
 	SDL_DestroyWindow(window);
 	SDL_GL_DeleteContext(glContext);
