@@ -339,7 +339,7 @@ void Setup()
 
 	PointLight* pointLight1 = new PointLight(lightPos1, glm::vec3(0.1, 0.1, 0.1), glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, 1.0), 1.0f, 0.3, 0.2);
 	pointLights.push_back(pointLight1);
-	dirLight = new DirLight(glm::vec3(0.5, -1.0, 0.2), glm::vec3(0.1, 0.1, 0.1), glm::vec3(0.4, 0.4, 0.4), glm::vec3(1.0, 1.0, 1.0));
+	dirLight = new DirLight(glm::vec3(0.5, -1.0, 0.2), glm::vec3(0.2, 0.2, 0.2), glm::vec3(0.4, 0.4, 0.4), glm::vec3(1.0, 1.0, 1.0));
 
 	material = new Material(GetNextTextureIndex(), GetNextTextureIndex(), 128, "./Textures/container2.png", "./Textures/container2_specular.png");
 	modelMaterial = new Material(GetNextTextureIndex(), GetNextTextureIndex(), 128, "./Models/diffuse.jpg", "./Models/specular.jpg");
