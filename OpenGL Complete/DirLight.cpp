@@ -11,3 +11,8 @@ void DirLight::UseLight(Shader& shader)
 	shader.SetVec3("dirLight.diffuse", diffuse);
 	shader.SetVec3("dirLight.specular", specular);
 }
+
+glm::vec3 DirLight::GetDirection()
+{
+	return direction;
+}

@@ -19,8 +19,8 @@ out VS_OUT
 } vs_out;
 
 uniform mat4 model;
-uniform mat4 viewS;
-uniform mat4 projS;
+uniform mat4 view;
+uniform mat4 proj;
 uniform mat4 lightSpaceMatrix;
 
 void main()
@@ -29,5 +29,5 @@ void main()
 	vs_out.normal = normalize(transpose(inverse(mat3(model))) * aNormal);
 	vs_out.texcoord = aTexcoord;
 	vs_out.fragPosLightSpace = lightSpaceMatrix * vec4(vs_out.fragPos, 1.0);
-	gl_Position = projS * viewS * vec4(vs_out.fragPos, 1.0);
+	gl_Position = proj * view * vec4(vs_out.fragPos, 1.0);
 }

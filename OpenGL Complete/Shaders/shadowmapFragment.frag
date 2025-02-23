@@ -125,8 +125,7 @@ void main()
 //		result += CalcPointLight(pointLights[i], norm, fs_in.fragPos, viewDir);
 //	}
 
-	float shadow = CalcDirShadow(fs_in.fragPosLightSpace);
+	float shadow = 1 - CalcDirShadow(fs_in.fragPosLightSpace);
 
-//	FragColor = vec4(result, 1.0);
-	FragColor = vec4(shadow, shadow, shadow, 1.0);
+	FragColor = vec4(result * shadow, 1.0);
 }

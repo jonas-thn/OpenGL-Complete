@@ -13,6 +13,8 @@ public:
 
 	void UseLight(Shader& shader);
 
+	glm::vec3 GetDirection();
+
 private:
 	glm::vec3 direction;
 	glm::vec3 ambient;

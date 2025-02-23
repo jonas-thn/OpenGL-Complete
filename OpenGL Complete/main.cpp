@@ -713,9 +713,11 @@ void Render()
 	else if (currentScene == Scene2)
 	{
 		//first pass
-		float near_plane = 1.0f, far_plane = 7.5f;
+		float near_plane = 1.0f, far_plane = 20.0f;
 		glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-		glm::mat4 lightView = glm::lookAt(lightPos1, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+		glm::vec3 lightDir = dirLight->GetDirection();
+		glm::vec3 lightPos = -lightDir * 10.0f;
+		glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
 		glm::mat4 lightSpaceMatrix = lightProjection * lightView;
 
 		depthShader->UseShader();
@@ -732,8 +734,8 @@ void Render()
 		glClearColor(0.3, 0.2, 0.15, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		shadowmapShader->UseShader();
-		shadowmapShader->SetMat4("viewS", camera->GetView());
-		shadowmapShader->SetMat4("projS", camera->GetProj());
+		shadowmapShader->SetMat4("view", camera->GetView());
+		shadowmapShader->SetMat4("proj", camera->GetProj());
 		shadowmapShader->SetVec3("viewPos", camera->GetPos());
 		shadowmapShader->SetMat4("lightSpaceMatrix", lightSpaceMatrix);
 		dirLight->UseLight(*shadowmapShader);
@@ -744,6 +746,16 @@ void Render()
 		shadowmapShader->SetInt("shadowMap", shadowMapIndex);
 
 		DrawScene2(shadowmapShader);
+
+		//debug pass
+		/*screenShader->UseShader();
+		glBindVertexArray(screenVAO);
+		glDisable(GL_DEPTH_TEST);
+		glActiveTexture(GL_TEXTURE31);
+		glBindTexture(GL_TEXTURE_2D, depthMap);
+		screenShader->SetInt("screenTexture", 31);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glEnable(GL_DEPTH_TEST);*/
 	}
 	else if (currentScene == Scene3)
 	{
