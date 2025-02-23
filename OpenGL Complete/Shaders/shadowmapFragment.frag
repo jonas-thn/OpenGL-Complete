@@ -4,9 +4,10 @@ out vec4 FragColor;
 
 in VS_OUT
 {
-in vec2 texcoord;
-in vec3 normal;
-in vec3 fragPos;
+	vec2 texcoord;
+	vec3 normal;
+	vec3 fragPos;
+	vec4 fragPosLightSpace;
 } fs_in;
 
 uniform vec3 viewPos;
@@ -17,6 +18,8 @@ struct Material
 	sampler2D specular;
 	float shininess;
 };
+
+uniform sampler2D shadowMap;
 
 uniform Material material;
 
@@ -95,6 +98,19 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
 //	return (ambient + diffuse + specular);
 //}
 
+float CalcDirShadow(vec4 fragPosLightSpace)
+{
+	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+	projCoords = projCoords * 0.5 + 0.5;
+	float closestDepth = texture(shadowMap, projCoords.xy).r;
+	float currentDepth = projCoords.z;
+
+	float shadow = currentDepth > closestDepth ? 1.0 : 0.0;
+
+	return shadow;
+}
+
+
 void main()
 {
 	vec3 norm = normalize(fs_in.normal);
@@ -109,6 +125,8 @@ void main()
 //		result += CalcPointLight(pointLights[i], norm, fs_in.fragPos, viewDir);
 //	}
 
-	FragColor = vec4(result, 1.0);
-	//FragColor = vec4(vec3(depth), 1.0);
+	float shadow = CalcDirShadow(fs_in.fragPosLightSpace);
+
+//	FragColor = vec4(result, 1.0);
+	FragColor = vec4(shadow, shadow, shadow, 1.0);
 }

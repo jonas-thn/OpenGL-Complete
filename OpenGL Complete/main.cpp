@@ -43,7 +43,7 @@ enum CurrentScene
 	Scene3
 };
 
-CurrentScene currentScene = Scene1;
+CurrentScene currentScene = Scene2;
 
 SDL_Window* window;
 SDL_GLContext glContext;
@@ -73,6 +73,7 @@ Shader* reflectionShader = nullptr;
 Shader* houseShader = nullptr;
 Shader* grassShader = nullptr;
 Shader* shadowmapShader = nullptr;
+Shader* depthShader = nullptr;	
 
 Material* material = nullptr;
 Material* modelMaterial = nullptr;
@@ -96,6 +97,11 @@ unsigned int uboMatrices;
 
 unsigned int const grassAmount = 256;
 glm::mat4 grassModels[grassAmount];
+
+unsigned int depthMapFBO;
+const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+unsigned int depthMap;
+int shadowMapIndex;
 
 int GetNextTextureIndex()
 {
@@ -329,6 +335,7 @@ void Setup()
 	houseShader = new Shader("Shaders/houseVertex.vert", "Shaders/houseFragment.frag", "Shaders/houseGeometry.geom");
 	grassShader = new Shader("Shaders/grassVertex.vert", "Shaders/grassFragment.frag");
 	shadowmapShader = new Shader("Shaders/shadowmapVertex.vert", "Shaders/shadowmapFragment.frag");
+	depthShader = new Shader("Shaders/depthVertex.vert", "Shaders/depthFragment.frag");
 
 	PointLight* pointLight1 = new PointLight(lightPos1, glm::vec3(0.1, 0.1, 0.1), glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, 1.0), 1.0f, 0.3, 0.2);
 	pointLights.push_back(pointLight1);
@@ -383,6 +390,22 @@ void Setup()
 		tempModel = tempTrans * tempRot;
 		grassModels[i] = tempModel;
 	}
+
+	shadowMapIndex = GetNextTextureIndex();
+	glGenTextures(1, &depthMap);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glGenFramebuffers(1, &depthMapFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void ProcessInput()
@@ -618,38 +641,30 @@ void DrawScene1()
 	glStencilMask(0xFF);
 }
 
-void DrawScene2()
+void DrawScene2(Shader* currentShader)
 {
-	shadowmapShader->UseShader();
-
-	shadowmapShader->SetVec3("viewPos", camera->GetPos());
-
-	dirLight->UseLight(*shadowmapShader);
-
-	woodMaterial->UseMaterial(*shadowmapShader);
-
 	glBindVertexArray(VAO);
 
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(0, 0, 0));
-	shadowmapShader->SetMat4("model", model);
+	currentShader->SetMat4("model", model);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(-1, 2, -1));
-	shadowmapShader->SetMat4("model", model);
+	currentShader->SetMat4("model", model);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	model = glm::mat4(1.0f);	
 	model = glm::rotate(model, glm::radians(30.0f), glm::vec3(1, 0, 0));
 	model = glm::translate(model, glm::vec3(1, 1, 2));
-	shadowmapShader->SetMat4("model", model);
+	currentShader->SetMat4("model", model);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	model = glm::mat4(1.0f);
 	model = glm::scale(model, glm::vec3(10.0f, 0.1f, 10.0f));
 	model = glm::translate(model, glm::vec3(0, -10, 0));
-	shadowmapShader->SetMat4("model", model);
+	currentShader->SetMat4("model", model);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	glBindVertexArray(0);
@@ -697,9 +712,38 @@ void Render()
 	}
 	else if (currentScene == Scene2)
 	{
+		//first pass
+		float near_plane = 1.0f, far_plane = 7.5f;
+		glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+		glm::mat4 lightView = glm::lookAt(lightPos1, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+		glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+
+		depthShader->UseShader();
+		depthShader->SetMat4("lightSpaceMatrix", lightSpaceMatrix);
+
+		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+		glClear(GL_DEPTH_BUFFER_BIT);
+		DrawScene2(depthShader);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		//second pass
+		glViewport(0, 0, WIDTH, HEIGHT);
 		glClearColor(0.3, 0.2, 0.15, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		DrawScene2();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		shadowmapShader->UseShader();
+		shadowmapShader->SetMat4("viewS", camera->GetView());
+		shadowmapShader->SetMat4("projS", camera->GetProj());
+		shadowmapShader->SetVec3("viewPos", camera->GetPos());
+		shadowmapShader->SetMat4("lightSpaceMatrix", lightSpaceMatrix);
+		dirLight->UseLight(*shadowmapShader);
+		woodMaterial->UseMaterial(*shadowmapShader);
+
+		glActiveTexture(GL_TEXTURE0 + shadowMapIndex);
+		glBindTexture(GL_TEXTURE_2D, depthMap);
+		shadowmapShader->SetInt("shadowMap", shadowMapIndex);
+
+		DrawScene2(shadowmapShader);
 	}
 	else if (currentScene == Scene3)
 	{

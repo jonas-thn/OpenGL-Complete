@@ -94,6 +94,8 @@
     <None Include="Shaders\grassVertex.vert" />
     <None Include="Shaders\shadowmapVertex.vert" />
     <None Include="Shaders\shadowmapFragment.frag" />
+    <None Include="Shaders\depthFragment.frag" />
+    <None Include="Shaders\depthVertex.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h">
