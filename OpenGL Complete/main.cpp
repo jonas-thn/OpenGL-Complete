@@ -340,7 +340,7 @@ void Setup()
 	shadowmapShader = new Shader("Shaders/shadowmapVertex.vert", "Shaders/shadowmapFragment.frag");
 	depthShader = new Shader("Shaders/depthVertex.vert", "Shaders/depthFragment.frag");
 
-	PointLight* pointLight1 = new PointLight(lightPos1, glm::vec3(0.1, 0.1, 0.1), glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, 1.0), 1.0f, 0.3, 0.2);
+	PointLight* pointLight1 = new PointLight(lightPos1, glm::vec3(0.1, 0.1, 0.1), glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, 1.0), 1.0f, 0.1, 0.05);
 	pointLights.push_back(pointLight1);
 	dirLight = new DirLight(glm::vec3(0.5, -1.0, 0.2), glm::vec3(0.2, 0.2, 0.2), glm::vec3(0.4, 0.4, 0.4), glm::vec3(1.0, 1.0, 1.0));
 
@@ -748,6 +748,12 @@ void Render()
 		shadowmapShader->SetVec3("viewPos", camera->GetPos());
 		shadowmapShader->SetMat4("lightSpaceMatrix", lightSpaceMatrix);
 		dirLight->UseLight(*shadowmapShader);
+
+		for (int i = 0; i < NR_POINT_LIGHTS; i++)
+		{
+			pointLights[i]->UseLight(*shader, i);
+		}
+
 		woodMaterial->UseMaterial(*shadowmapShader);
 
 		glActiveTexture(GL_TEXTURE0 + shadowMapIndex);
