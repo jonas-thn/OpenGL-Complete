@@ -4,6 +4,7 @@
 #include <map>
 #include <cstdlib>
 #include <ctime>
+#include <cmath>
 
 #define GLEW_STATIC
 #include <GL/glew.h>
@@ -35,6 +36,8 @@
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
+
+float gameTime = 0.0f;
 
 enum CurrentScene
 {
@@ -391,6 +394,7 @@ void Setup()
 		grassModels[i] = tempModel;
 	}
 
+	//directional shadowmaps 
 	shadowMapIndex = GetNextTextureIndex();
 	glGenTextures(1, &depthMap);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
@@ -417,6 +421,7 @@ void ProcessInput()
 }
 void Update(float deltaTime)
 {
+	gameTime += deltaTime;
 	camera->UpdateView(deltaTime);
 }
 
@@ -446,9 +451,6 @@ void RenderImGui(bool x)
 	}
 
 	ImGui::Render();
-	//glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-	/*glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-	glClear(GL_COLOR_BUFFER_BIT);*/
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
@@ -653,7 +655,7 @@ void DrawScene2(Shader* currentShader)
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(-1, 2, -1));
+	model = glm::translate(model, glm::vec3(2 * sin(gameTime) - 1, 2, -1));
 	currentShader->SetMat4("model", model);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
