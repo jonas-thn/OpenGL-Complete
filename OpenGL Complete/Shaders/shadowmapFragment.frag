@@ -116,8 +116,9 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 
 	if (isnan(attenuation) || isinf(attenuation)) 
 	{
-		attenuation = 1; // Magenta for error/debug
+		attenuation = 1.0; // Magenta for error/debug
 	}
+
 	//combine
 	vec3 ambient = light.ambient * vec3(texture(material.diffuse, fs_in.texcoord));
 	vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, fs_in.texcoord));

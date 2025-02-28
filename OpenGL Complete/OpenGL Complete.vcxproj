@@ -183,6 +183,8 @@
     <None Include="Shaders\lightVertex.vert" />
     <None Include="Shaders\modelFragment.frag" />
     <None Include="Shaders\modelVertex.vert" />
+    <None Include="Shaders\normalFragment.frag" />
+    <None Include="Shaders\normalVertex.vert" />
     <None Include="Shaders\outlineFragment.frag" />
     <None Include="Shaders\outlineVertex.vert" />
     <None Include="Shaders\quadFragment.frag" />

@@ -12,7 +12,7 @@ class Material
 public:
 	static const int textureIndices[16];
 
-	Material(int diffuseIndex, int specularIndex, float shininess, const char* diffusePath, const char* specularPath);
+	Material(int diffuseIndex, int specularIndex, float shininess, const char* diffusePath, const char* specularPath, const char* normalPath = NULL, int normalIndex = 0);
 
 	~Material();
 
@@ -21,10 +21,12 @@ public:
 private:
 	int diffuseIndex;
 	int specularIndex;
+	int normalIndex = 0;
 	float shininess;
 
 	unsigned int diffuseTexture;
 	unsigned int specularTexture;
+	unsigned int normalTexture;
 };
 
 

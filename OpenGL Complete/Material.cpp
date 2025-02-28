@@ -20,8 +20,8 @@ const int Material::textureIndices[16] =
 	GL_TEXTURE15,
 };
 
-Material::Material(int diffuseIndex, int specularIndex, float shininess, const char* diffusePath, const char* specularPath)
-	:diffuseIndex(diffuseIndex), specularIndex(specularIndex), shininess(shininess)
+Material::Material(int diffuseIndex, int specularIndex, float shininess, const char* diffusePath, const char* specularPath, const char* normalPath, int normalIndex)
+	:diffuseIndex(diffuseIndex), specularIndex(specularIndex), shininess(shininess), normalIndex(normalIndex)
 {
 	stbi_set_flip_vertically_on_load(true);
 
@@ -92,12 +92,53 @@ Material::Material(int diffuseIndex, int specularIndex, float shininess, const c
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	stbi_image_free(data);
+
+	if (normalPath != NULL)
+	{
+		data = NULL;
+		data = stbi_load(normalPath, &width, &height, &nChannels, 0);
+
+		if (data == NULL)
+		{
+			std::cout << "Failed to load texture." << std::endl;
+		}
+
+		glGenTextures(1, &normalTexture);
+		glActiveTexture(textureIndices[normalIndex]);
+		glBindTexture(GL_TEXTURE_2D, normalTexture);
+
+		if (nChannels == 4)
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		}
+		else if (nChannels == 3)
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		}
+		else if (nChannels == 1)
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, data);
+		}
+		else
+		{
+			std::cout << "nChannels Image Error." << std::endl;
+		}
+
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		stbi_image_free(data);
+	}
 }
 
 Material::~Material()
 {
 	glDeleteTextures(1, &diffuseTexture);
 	glDeleteTextures(1, &specularTexture);
+	
+	if (normalIndex != 0)
+	{
+		glDeleteTextures(1, &normalTexture);
+	}
 }
 
 void Material::UseMaterial(Shader& shader)
@@ -110,4 +151,11 @@ void Material::UseMaterial(Shader& shader)
 	shader.SetInt("material.diffuse", diffuseIndex);
 	shader.SetInt("material.specular", specularIndex);
 	shader.SetFloat("material.shininess", shininess);
+
+	if (normalIndex != 0)
+	{
+		glActiveTexture(textureIndices[normalIndex]);
+		glBindTexture(GL_TEXTURE_2D, normalTexture);
+		shader.SetInt("material.normal", normalIndex);
+	}
 }

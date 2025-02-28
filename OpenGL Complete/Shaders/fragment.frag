@@ -117,5 +117,6 @@ void main()
 	float depth = LinearDepth(gl_FragCoord.z, 0.1, 50);
 
 	FragColor = vec4(result, 1.0);
+
 	//FragColor = vec4(vec3(depth), 1.0);
 }
