@@ -98,6 +98,8 @@
     <None Include="Shaders\depthVertex.vert" />
     <None Include="Shaders\normalVertex.vert" />
     <None Include="Shaders\normalFragment.frag" />
+    <None Include="Shaders\standardFragment.frag" />
+    <None Include="Shaders\standardVertex.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h">

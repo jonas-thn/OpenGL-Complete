@@ -197,6 +197,8 @@
     <None Include="Shaders\shadowmapVertex.vert" />
     <None Include="Shaders\skyboxFragment.frag" />
     <None Include="Shaders\skyboxVertex.vert" />
+    <None Include="Shaders\standardFragment.frag" />
+    <None Include="Shaders\standardVertex.vert" />
     <None Include="Shaders\vertex.vert" />
   </ItemGroup>
   <ItemGroup>

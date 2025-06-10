@@ -46,7 +46,7 @@ enum CurrentScene
 	Scene3
 };
 
-CurrentScene currentScene = Scene2;
+CurrentScene currentScene = Scene3;
 
 SDL_Window* window;
 SDL_GLContext glContext;
@@ -78,6 +78,7 @@ Shader* grassShader = nullptr;
 Shader* shadowmapShader = nullptr;
 Shader* depthShader = nullptr;	
 Shader* normalShader = nullptr;
+Shader* standardShader = nullptr;
 
 Material* material = nullptr;
 Material* modelMaterial = nullptr;
@@ -345,6 +346,7 @@ void Setup()
 	shadowmapShader = new Shader("Shaders/shadowmapVertex.vert", "Shaders/shadowmapFragment.frag");
 	depthShader = new Shader("Shaders/depthVertex.vert", "Shaders/depthFragment.frag");
 	normalShader = new Shader("Shaders/normalVertex.vert", "Shaders/normalFragment.frag");
+	standardShader = new Shader("Shaders/standardVertex.vert", "Shaders/standardFragment.frag");
 
 	PointLight* pointLight1 = new PointLight(lightPos1, glm::vec3(1.0, 0.1, 0.1), glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, 1.0), 1.0f, 0.1, 0.05);
 	pointLights.push_back(pointLight1);
@@ -886,9 +888,49 @@ void Render()
 	}
 	else if (currentScene == Scene3)
 	{
-		glClearColor(0.2, 0.3, 0.0, 0.15f);
+		glClearColor(0.05, 0.1, 0.0, 1);
+
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		//render Scene3
+		
+		//light
+		lightShader->UseShader();
+		lightShader->SetVec3("lightColor", glm::vec3(1, 1, 1));
+		glm::mat4 lightModel = glm::mat4(1.0f);
+		lightShader->SetMat4("model", lightModel);
+
+		glBindVertexArray(lightVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glBindVertexArray(0);
+
+		//boxes
+		standardShader->UseShader();
+
+		standardShader->SetVec3("viewPos", camera->GetPos());
+
+		material->UseMaterial(*standardShader);
+
+		glBindVertexArray(VAO);
+
+		int tempDistance = 5;
+		glm::vec3 tempPostions[] = 
+		{
+			glm::vec3(0, 0, -tempDistance),
+			glm::vec3(tempDistance, 0, 0),
+			glm::vec3(-tempDistance, 0, 0),
+			glm::vec3(0, tempDistance, 0),
+			glm::vec3(0, -tempDistance, 0),
+		};
+
+		for(int i = 0; i < 5; i++)
+		{
+			glm::mat4 model = glm::mat4(1.0f);
+			model = glm::translate(model, tempPostions[i]);
+			model = glm::scale(model, glm::vec3(5, 5, 5));
+			standardShader->SetMat4("model", model);
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
+		glBindVertexArray(0);
 	}
 
 	RenderImGui(input->GetX());
@@ -946,6 +988,7 @@ void Cleanup()
 	delete depthShader;
 	delete normalShader;
 	delete normalMaterial;
+	delete standardShader;
 
 	SDL_DestroyWindow(window);
 	SDL_GL_DeleteContext(glContext);
