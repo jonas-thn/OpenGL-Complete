@@ -100,6 +100,8 @@
     <None Include="Shaders\normalFragment.frag" />
     <None Include="Shaders\standardFragment.frag" />
     <None Include="Shaders\standardVertex.vert" />
+    <None Include="Shaders\bloomVertex.vert" />
+    <None Include="Shaders\bloomFragment.frag" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h">

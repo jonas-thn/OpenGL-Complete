@@ -79,6 +79,7 @@ Shader* shadowmapShader = nullptr;
 Shader* depthShader = nullptr;	
 Shader* normalShader = nullptr;
 Shader* standardShader = nullptr;
+Shader* bloomShader = nullptr;
 
 Material* material = nullptr;
 Material* modelMaterial = nullptr;
@@ -109,7 +110,7 @@ const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
 unsigned int depthMap;
 int shadowMapIndex;
 
-unsigned int normalVAO = 0;
+unsigned int normalVAO;
 unsigned int normalVBO;
 
 int GetNextTextureIndex()
@@ -347,6 +348,7 @@ void Setup()
 	depthShader = new Shader("Shaders/depthVertex.vert", "Shaders/depthFragment.frag");
 	normalShader = new Shader("Shaders/normalVertex.vert", "Shaders/normalFragment.frag");
 	standardShader = new Shader("Shaders/standardVertex.vert", "Shaders/standardFragment.frag");
+	bloomShader = new Shader("Shaders/bloomVertex.vert", "Shaders/bloomFragment.frag");
 
 	PointLight* pointLight1 = new PointLight(lightPos1, glm::vec3(1.0, 0.1, 0.1), glm::vec3(1.0, 1.0, 1.0), glm::vec3(1.0, 1.0, 1.0), 1.0f, 0.1, 0.05);
 	pointLights.push_back(pointLight1);
@@ -888,10 +890,11 @@ void Render()
 	}
 	else if (currentScene == Scene3)
 	{
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		glClearColor(0.05, 0.1, 0.0, 1);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		
+
 		//light
 		lightShader->UseShader();
 		lightShader->SetVec3("lightColor", glm::vec3(1, 1, 1));
@@ -912,7 +915,7 @@ void Render()
 		glBindVertexArray(VAO);
 
 		int tempDistance = 5;
-		glm::vec3 tempPostions[] = 
+		glm::vec3 tempPostions[] =
 		{
 			glm::vec3(0, 0, -tempDistance),
 			glm::vec3(tempDistance, 0, 0),
@@ -921,7 +924,7 @@ void Render()
 			glm::vec3(0, -tempDistance, 0),
 		};
 
-		for(int i = 0; i < 5; i++)
+		for (int i = 0; i < 5; i++)
 		{
 			glm::mat4 model = glm::mat4(1.0f);
 			model = glm::translate(model, tempPostions[i]);
@@ -931,6 +934,20 @@ void Render()
 		}
 
 		glBindVertexArray(0);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClearColor(0.05, 0.1, 0.0, 1);
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+		bloomShader->UseShader();
+		glBindVertexArray(screenVAO);
+		glDisable(GL_DEPTH_TEST);
+		glActiveTexture(GL_TEXTURE31);
+		glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+		bloomShader->SetInt("screenTexture", 31);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glEnable(GL_DEPTH_TEST);
 	}
 
 	RenderImGui(input->GetX());

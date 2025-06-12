@@ -171,6 +171,8 @@
     <ClCompile Include="stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Shaders\bloomFragment.frag" />
+    <None Include="Shaders\bloomVertex.vert" />
     <None Include="Shaders\depthFragment.frag" />
     <None Include="Shaders\depthVertex.vert" />
     <None Include="Shaders\fragment.frag" />
