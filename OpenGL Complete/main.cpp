@@ -980,16 +980,18 @@ void Render()
 	else if (currentScene == Scene3)
 	{
 		//firt pass
+		glm::vec3 backgroundColor(0.05, 0.1, 0.0);
+
 		glEnable(GL_DEPTH_TEST);
 		glBindFramebuffer(GL_FRAMEBUFFER, gFBO);
-		glClearColor(0.05, 0.1, 0.0, 1);
+		glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		DrawScene3();
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glClearColor(0.05, 0.1, 0.0, 1);
+		glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -1012,6 +1014,7 @@ void Render()
 
 		bloomShader->SetMat4("projection", camera->GetProj());
 		bloomShader->SetMat4("view", camera->GetView());
+		bloomShader->SetVec3("backgroundColor", backgroundColor);
 
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		//glEnable(GL_DEPTH_TEST);

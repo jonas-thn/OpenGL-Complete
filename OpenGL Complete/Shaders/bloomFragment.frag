@@ -11,6 +11,8 @@ uniform sampler2D gNormal;
 uniform mat4 projection;
 uniform mat4 view;
 
+uniform vec3 backgroundColor;
+
 int bloomRadius = 30;
 
 float ssaoRadius = 0.5;
@@ -33,6 +35,11 @@ vec3 samples[kernelSize] = vec3[](
     vec3( 0.0352, -0.0631,  0.5460),
     vec3(-0.4776,  0.2847, -0.0271)
 );
+
+bool similarVec3(vec3 a, vec3 b, float epsilon)
+{
+    return all(lessThanEqual(abs(a - b), vec3(epsilon)));
+}
 
 void main()
 {
@@ -81,5 +88,12 @@ void main()
     ao = mix(1.0, ao, (additionalMask.r / 3 + additionalMask.g / 3 + additionalMask.b / 3) * mask);
 
     ao = pow(ao, 5.0);
+
+    if(similarVec3(original, backgroundColor, 0.01))
+    {
+        discard;
+    }
+
 	FragColor = vec4(original  * ao + result * vec3(1.0, 0.5, 0.7), 1.0);
+
 }
