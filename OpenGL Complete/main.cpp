@@ -113,6 +113,11 @@ int shadowMapIndex;
 unsigned int normalVAO;
 unsigned int normalVBO;
 
+unsigned int gFBO;
+unsigned int gPosition, gNormal, gAlbedo;
+unsigned int rboDepth;
+
+
 int GetNextTextureIndex()
 {
 	static int number = 1;
@@ -328,6 +333,41 @@ void Setup()
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
 	glBindVertexArray(0);
+
+	glGenFramebuffers(1, &gFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, gFBO);
+			
+	//texture G-framebuffer attachment
+	glGenTextures(1, &gPosition);
+	glBindTexture(GL_TEXTURE_2D, gPosition);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, WIDTH, HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
+
+	glGenTextures(1, &gNormal);
+	glBindTexture(GL_TEXTURE_2D, gNormal);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, WIDTH, HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
+
+	glGenTextures(1, &gAlbedo);
+	glBindTexture(GL_TEXTURE_2D, gAlbedo);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, WIDTH, HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedo, 0);
+
+	GLuint attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+	glDrawBuffers(3, attachments);
+
+	glGenRenderbuffers(1, &rboDepth);
+	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, WIDTH, HEIGHT);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	//----------INIT----------
 
@@ -788,6 +828,55 @@ void DrawScene2()
 	glBindVertexArray(0);
 }
 
+void DrawScene3()
+{
+	//light
+	lightShader->UseShader();
+	lightShader->SetVec3("lightColor", glm::vec3(1, 1, 1));
+	glm::mat4 lightModel = glm::mat4(1.0f);
+	lightShader->SetMat4("model", lightModel);
+
+	glBindVertexArray(lightVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+
+	//boxes
+	standardShader->UseShader();
+
+	standardShader->SetVec3("viewPos", camera->GetPos());
+
+	material->UseMaterial(*standardShader);
+
+	glBindVertexArray(VAO);
+
+	int tempDistance = 5;
+	glm::vec3 tempPostions[] =
+	{
+		glm::vec3(0, 0, -tempDistance),
+		glm::vec3(tempDistance, 0, 0),
+		glm::vec3(-tempDistance, 0, 0),
+		glm::vec3(0, tempDistance, 0),
+		glm::vec3(0, -tempDistance, 0),
+	};
+
+	for (int i = 0; i < 5; i++)
+	{
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, tempPostions[i]);
+		model = glm::scale(model, glm::vec3(5, 5, 5));
+		standardShader->SetMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+	}
+
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(2, -2, -2));
+	model = glm::scale(model, glm::vec3(2, 2, 2));
+	standardShader->SetMat4("model", model);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	glBindVertexArray(0);
+}
+
 void Render()
 {
 	glm::mat4 view = camera->GetView();
@@ -890,64 +979,42 @@ void Render()
 	}
 	else if (currentScene == Scene3)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		//firt pass
+		glEnable(GL_DEPTH_TEST);
+		glBindFramebuffer(GL_FRAMEBUFFER, gFBO);
 		glClearColor(0.05, 0.1, 0.0, 1);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-		//light
-		lightShader->UseShader();
-		lightShader->SetVec3("lightColor", glm::vec3(1, 1, 1));
-		glm::mat4 lightModel = glm::mat4(1.0f);
-		lightShader->SetMat4("model", lightModel);
-
-		glBindVertexArray(lightVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glBindVertexArray(0);
-
-		//boxes
-		standardShader->UseShader();
-
-		standardShader->SetVec3("viewPos", camera->GetPos());
-
-		material->UseMaterial(*standardShader);
-
-		glBindVertexArray(VAO);
-
-		int tempDistance = 5;
-		glm::vec3 tempPostions[] =
-		{
-			glm::vec3(0, 0, -tempDistance),
-			glm::vec3(tempDistance, 0, 0),
-			glm::vec3(-tempDistance, 0, 0),
-			glm::vec3(0, tempDistance, 0),
-			glm::vec3(0, -tempDistance, 0),
-		};
-
-		for (int i = 0; i < 5; i++)
-		{
-			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, tempPostions[i]);
-			model = glm::scale(model, glm::vec3(5, 5, 5));
-			standardShader->SetMat4("model", model);
-			glDrawArrays(GL_TRIANGLES, 0, 36);
-		}
-
-		glBindVertexArray(0);
+		DrawScene3();
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClearColor(0.05, 0.1, 0.0, 1);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+		//second pass
 		bloomShader->UseShader();
 		glBindVertexArray(screenVAO);
-		glDisable(GL_DEPTH_TEST);
+		//glDisable(GL_DEPTH_TEST);
+
 		glActiveTexture(GL_TEXTURE31);
-		glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-		bloomShader->SetInt("screenTexture", 31);
+		glBindTexture(GL_TEXTURE_2D, gAlbedo);
+		bloomShader->SetInt("gAlbedo", 31);
+
+		glActiveTexture(GL_TEXTURE30);
+		glBindTexture(GL_TEXTURE_2D, gPosition);
+		bloomShader->SetInt("gPosition", 30);
+
+		glActiveTexture(GL_TEXTURE29);
+		glBindTexture(GL_TEXTURE_2D, gNormal);
+		bloomShader->SetInt("gNormal", 29);
+
+		bloomShader->SetMat4("projection", camera->GetProj());
+		bloomShader->SetMat4("view", camera->GetView());
+
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-		glEnable(GL_DEPTH_TEST);
+		//glEnable(GL_DEPTH_TEST);
 	}
 
 	RenderImGui(input->GetX());
